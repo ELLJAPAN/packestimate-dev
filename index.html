@@ -23,16 +23,16 @@
         const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwCTLnz4UK7la_Wpc900rW56PvFrWX3Z5XvouehUn9pmxqo0ksut8xviRKffttHoHE2ew/exec'; // ← デプロイ後に書き換え
 
         // ===== API通信 =====
-        const server = {
-            call: async (action, params = {}) => {
-                const res = await fetch(GAS_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action, ...params })
-                });
-                return res.json();
-            }
-        };
+const server = {
+    call: async (action, params = {}) => {
+        const res = await fetch(GAS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action, ...params }),
+            redirect: 'follow'
+        });
+        return res.json();
+    }
+};
 
         // ===== アイコンコンポーネント =====
         const Icon = ({ name, size = 20, className = '' }) => {
