@@ -20,19 +20,30 @@
     <div id="root"></div>
     <script type="text/babel">
         // ===== 設定 =====
-        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwCTLnz4UK7la_Wpc900rW56PvFrWX3Z5XvouehUn9pmxqo0ksut8xviRKffttHoHE2ew/exec'; // ← デプロイ後に書き換え
+        const GAS_API_URL = 'YOUR_GAS_DEPLOYMENT_URL_HERE'; // ← デプロイ後に書き換え
 
         // ===== API通信 =====
-const server = {
-    call: async (action, params = {}) => {
-        const res = await fetch(GAS_API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action, ...params }),
-            redirect: 'follow'
-        });
-        return res.json();
-    }
-};
+        const server = {
+            call: async (action, params = {}) => {
+                try {
+                    const res = await fetch(GAS_API_URL, {
+                        method: 'POST',
+                        mode: 'cors',
+                        body: JSON.stringify({ action, ...params })
+                    });
+                    const text = await res.text();
+                    try {
+                        return JSON.parse(text);
+                    } catch {
+                        console.error('JSON parse error:', text);
+                        return { success: false, message: 'レスポンス解析エラー' };
+                    }
+                } catch (e) {
+                    console.error('Fetch error:', e);
+                    return { success: false, message: '通信エラー: ' + e.message };
+                }
+            }
+        };
 
         // ===== アイコンコンポーネント =====
         const Icon = ({ name, size = 20, className = '' }) => {
