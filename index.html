@@ -4,860 +4,799 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PackEstimate AI Pro (Dev)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <script>window.tailwind = { config: {} };</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Helvetica Neue"', 'Arial', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+                    },
+                    colors: {
+                        slate: { 850: '#1e293b', 900: '#0f172a' },
+                        brand: { primary: '#4f46e5', secondary: '#0f172a', accent: '#0ea5e9', danger: '#ef4444', success: '#10b981' },
+                        keepa: { DEFAULT: '#0099e5', dark: '#0077b3', light: '#e0f2fe' },
+                        ai: { DEFAULT: '#8b5cf6', dark: '#7c3aed', light: '#f3e8ff' },
+                        serp: { DEFAULT: '#f59e0b', dark: '#d97706', light: '#fef3c7' }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <style>
-        * { font-family: 'Inter', sans-serif; }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        @keyframes fade-in { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .animate-fade-in { animation: fade-in 0.3s ease-out; }
-        .animate-pulse { animation: pulse 2s infinite; }
-        .glass { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); }
-        .dev-badge { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        body { font-family: sans-serif; background-color: #f1f5f9; color: #1e293b; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .loader { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid white; width: 20px; height: 20px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .markdown-body { font-size: 0.875rem; line-height: 1.6; word-wrap: break-word; }
+        .markdown-body ul { list-style-type: disc; padding-left: 1.5em; }
+        .markdown-body p { margin-bottom: 0.5em; }
+        .dev-badge { background: linear-gradient(135deg, #f59e0b, #d97706); }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen">
+<body>
     <div id="root"></div>
-    <script type="text/babel">
-        // ===== 設定 =====
-        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwCTLnz4UK7la_Wpc900rW56PvFrWX3Z5XvouehUn9pmxqo0ksut8xviRKffttHoHE2ew/exec';
 
-        // ===== API通信（CORS対策済み） =====
+    <script type="text/babel">
+        // ★★★★★ 設定エリア (重要) ★★★★★
+        // 開発版GAS API URL
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwCTLnz4UK7la_Wpc900rW56PvFrWX3Z5XvouehUn9pmxqo0ksut8xviRKffttHoHE2ew/exec";
+        // ★★★★★★★★★★★★★★★★★★★
+
+        const { useState, useEffect, useRef, useMemo, Fragment } = React;
+
+        // --- Templates ---
+        const DDP_TEMPLATE_DEFAULT = `Payment
+
+We will ship your order within 7 business days after confirming payment.
+
+Shipping Methods
+
+eBay SpeedPAK Economy
+　Estimated delivery:About 6–14 days (with tracking number)
+
+eBay SpeedPAK Expedited
+　Estimated delivery:About 5–7 days (with tracking number and full insurance)
+
+Economy Shipping
+　Estimated delivery: About 2–7 weeks (with tracking number)
+
+Expedited Shipping (EMS, DHL, FedEx)
+
+・EMS (Express Mail Service)
+　Estimated delivery: About 5–7 days (with tracking number and full insurance)
+
+・DHL / FedEx Service
+　Estimated delivery: About 4–6 days (with tracking number and full insurance)
+
+Delivery times may vary depending on the destination country and other factors.
+
+Important Notes
+
+・We only ship to the address registered with eBay.
+・Shipping to any address other than the registered one is not available.
+
+About Us
+
+Thank you very much for visiting our store.
+We provide high-quality products directly from Japan.
+Our commitment is to serve our customers with sincerity and to provide a pleasant shopping experience.
+If you have any questions, please feel free to contact us by email.
+We look forward to your order.
+
+Notice for Buyers in the United States
+
+Customs duties are already included in the additional charge at the time of purchase. No extra customs fees will be required upon delivery.
+
+International Buyers – Please Note
+
+Import duties, taxes, and other charges are not included in the item price or shipping cost. These charges are the buyer's responsibility.
+Please check with your country's customs office prior to bidding or buying to determine what these additional costs may be.
+These charges are usually collected by the shipping carrier or when you pick the item up. Please do not confuse them with additional shipping charges.`;
+
+        const DDU_TEMPLATE_DEFAULT = `Payment
+
+We will ship within 7 business days once payment is received.
+
+Shipping
+
+1.Economy Shipping
+Sal(Registered AIR Small Mail)
+About 2-7 weeks no Tracking Number
+2.Standard Shipping
+E-Packet(Registered AIR Small Mail)
+Aabout 7-30 days with Tracking Number
+3.Expidited Shipping EMS or DHL Service
+EMS(Express Mail Service)
+About 5-7 days with Tracking Number and full insurance
+DHL Service
+About 4-6 days with Tracking Number and full insurance
+However, this may vary depending on destinations and other factors.
+
+We only ship to ebay registered addresses.
+We do not ship to addresses other than the registered address.
+
+About Us
+
+Thank you for visiting.
+We will provide you high quality products from Japan.
+Our commitment is to serve our customers with cordiality.
+We will make your shopping experience a great one.
+Please feel free to e-mail us if you have any questions.
+We are waiting for your order.
+
+International Buyers - Please Note:
+
+Import duties, taxes and charges are not included in the item price or shipping charges. These charges are the buyer's responsibility.
+Please check with your country's customs office to determine what these additional costs will be prior to bidding buying.
+These charges are normally collected by the delivering freight shipping company or when you pick the item up do not confuse them for additional shipping charges.`;
+
+        // --- GitHub Pages用 通信ブリッジ (fetch) ---
         const server = {
-            call: async (action, params = {}) => {
+            call: async (action, ...args) => {
+                let payload = { action };
+                
+                // 引数のマッピング
+                if (action === 'checkLogin') { payload.username = args[0]; payload.password = args[1]; }
+                else if (action === 'validateSession') { return true; }
+                else if (action === 'fetchKeepaData') { payload.type = args[0]; payload.value = args[1]; }
+                else if (action === 'searchImageWithSerpAPI') { payload.imageBase64 = args[0]; }
+                else if (action === 'callGemini_Server') { payload.payload = args[0]; }
+                else if (action === 'getSystemConfigStatus') { payload.username = args[0]; payload.password = args[1]; }
+                else if (action === 'saveSystemConfig') { payload.username = args[0]; payload.password = args[1]; payload.config = args[2]; }
+                else if (action === 'checkSerpAPIUsage') { /* 引数なし */ }
+                else {
+                    const session = JSON.parse(localStorage.getItem('pack_estimate_session') || '{}');
+                    payload.auth = { username: session.username, password: session.password };
+                    if(action==='getUsers') {} 
+                    else if(action==='addUser') { payload.newUser = { username: args[0], password: args[1], role: args[2] }; }
+                    else if(action==='toggleUser') { payload.targetUser = args[0]; payload.enabled = args[1]; }
+                    else if(action==='deleteUser') { payload.targetUser = args[0]; }
+                    else if(action==='resetPassword') { payload.targetUser = args[0]; payload.newPass = args[1]; }
+                }
+
                 try {
                     const res = await fetch(GAS_API_URL, {
                         method: 'POST',
-                        body: JSON.stringify({ action, ...params }),
+                        body: JSON.stringify(payload),
                         redirect: 'follow'
                     });
-                    return res.json();
+                    const json = await res.json();
+                    return json;
                 } catch (e) {
-                    console.error('API Error:', e);
-                    return { success: false, message: e.toString() };
+                    console.error("API Error:", e);
+                    throw new Error("サーバー通信エラー: " + e.message);
                 }
             }
         };
 
-        // ===== アイコンコンポーネント =====
-        const Icon = ({ name, size = 20, className = '' }) => {
-            const ref = React.useRef(null);
-            React.useEffect(() => {
-                if (ref.current && lucide[name]) {
-                    ref.current.innerHTML = '';
-                    const svg = lucide.createElement(lucide[name]);
-                    svg.setAttribute('width', size);
-                    svg.setAttribute('height', size);
-                    if (className) svg.setAttribute('class', className);
-                    ref.current.appendChild(svg);
-                }
-            }, [name, size, className]);
-            return <span ref={ref} className="inline-flex items-center justify-center" />;
+        // --- Icons ---
+        const Icon = ({ name, className = "", size = 20 }) => {
+            const icons = {
+                'box': <Fragment><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></Fragment>,
+                'settings': <Fragment><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></Fragment>,
+                'x': <Fragment><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></Fragment>,
+                'alert-circle': <Fragment><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></Fragment>,
+                'camera': <Fragment><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></Fragment>,
+                'package': <Fragment><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></Fragment>,
+                'shield': <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>,
+                'sparkles': <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>,
+                'box-select': <Fragment><path d="M5 3a2 2 0 0 0-2 2"/><path d="M19 3a2 2 0 0 1 2 2"/><path d="M21 19a2 2 0 0 1-2 2"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M9 3h1"/><path d="M9 21h1"/><path d="M14 3h1"/><path d="M14 21h1"/><path d="M3 9v1"/><path d="M21 9v1"/><path d="M3 14v1"/><path d="M21 14v1"/></Fragment>,
+                'ruler': <Fragment><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0l12.6 12.6z"/><line x1="13" y1="7" x2="14" y2="8"/><line x1="12" y1="9" x2="13" y2="10"/><line x1="11" y1="11" x2="12" y2="12"/><line x1="10" y1="13" x2="11" y2="14"/><line x1="8" y1="12" x2="9" y2="13"/><line x1="7" y1="14" x2="8" y2="15"/><line x1="6" y1="16" x2="7" y2="17"/><line x1="5" y1="18" x2="6" y2="19"/></Fragment>,
+                'info': <Fragment><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></Fragment>,
+                'history': <Fragment><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></Fragment>,
+                'globe': <Fragment><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></Fragment>,
+                'file-text': <Fragment><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></Fragment>,
+                'copy': <Fragment><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></Fragment>,
+                'check': <polyline points="20 6 9 17 4 12"/>,
+                'battery-charging': <Fragment><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19"/><line x1="23" y1="13" x2="23" y2="11"/><polyline points="11 6 7 12 13 12 9 18"/></Fragment>,
+                'search': <Fragment><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></Fragment>,
+                'brain': <Fragment><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></Fragment>,
+                'barcode': <Fragment><path d="M3 5v14"/><path d="M8 5v14"/><path d="M12 5v14"/><path d="M17 5v14"/><path d="M21 5v14"/></Fragment>,
+                'tag': <Fragment><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></Fragment>,
+                'rotate-ccw': <Fragment><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></Fragment>,
+                'trash-2': <Fragment><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></Fragment>,
+                'activity': <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>,
+                'database': <Fragment><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></Fragment>,
+                'table': <Fragment><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="21" x2="9" y2="9"/><line x1="15" y1="21" x2="15" y2="9"/></Fragment>,
+                'edit': <Fragment><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></Fragment>,
+                'external-link': <Fragment><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></Fragment>,
+                'target': <Fragment><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></Fragment>,
+                'eye': <Fragment><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></Fragment>,
+                'alert-triangle': <Fragment><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></Fragment>,
+                'user': <Fragment><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></Fragment>,
+                'users': <Fragment><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Fragment>,
+                'lock': <Fragment><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></Fragment>,
+                'unlock': <Fragment><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></Fragment>,
+                'log-out': <Fragment><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></Fragment>,
+                'user-plus': <Fragment><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></Fragment>,
+                'user-x': <Fragment><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></Fragment>,
+                'key': <Fragment><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></Fragment>
+            };
+            return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name] || <circle cx="12" cy="12" r="10"/>}</svg>;
         };
 
-        // ===== エラーバウンダリ =====
+        // --- Helper Components ---
+        const CopyButton = ({ text, className = "", label = null, iconName = "copy" }) => {
+            const [copied, setCopied] = useState(false);
+            const handleCopy = async (e) => {
+                e.stopPropagation();
+                if (!text || text === "不明") return;
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        await navigator.clipboard.writeText(text);
+                    } else {
+                        const textArea = document.createElement("textarea"); textArea.value = text; textArea.style.position = "fixed"; textArea.style.opacity = "0";
+                        document.body.appendChild(textArea); textArea.focus(); textArea.select();
+                        document.execCommand('copy'); document.body.removeChild(textArea);
+                    }
+                    setCopied(true); setTimeout(() => setCopied(false), 2000);
+                } catch (err) { alert("コピー失敗"); }
+            };
+            return <button onClick={handleCopy} className={`p-1.5 rounded-md hover:bg-slate-100 transition-colors text-slate-400 hover:text-brand-primary flex items-center gap-1 ${className}`} title="コピー">{label && <span className="text-xs font-bold">{label}</span>}<Icon name={copied ? "check" : iconName} size={16} className={copied ? "text-brand-success" : ""} /></button>;
+        };
+
+        const PolicyCard = ({ title, content, isEditable = false, onSave = null, isHighlight = false }) => {
+            const [isEditing, setIsEditing] = useState(false);
+            const [editContent, setEditContent] = useState(content);
+            const handleSave = () => { if (onSave) onSave(editContent); setIsEditing(false); };
+            return (
+                <div className={`rounded-lg p-3 border flex flex-col h-full transition-all ${isHighlight ? 'bg-amber-50 border-amber-200 shadow-sm' : 'bg-slate-50 border-slate-200'}`}>
+                    <div className="flex justify-between items-center mb-2">
+                        <h5 className={`text-xs font-bold uppercase flex items-center gap-1 ${isHighlight ? 'text-amber-700' : 'text-slate-600'}`}>{title} {isEditable && <button onClick={() => setIsEditing(!isEditing)} className="text-slate-400 hover:text-brand-primary"><Icon name="edit" size={14}/></button>}</h5>
+                        <CopyButton text={content} className="text-xs" />
+                    </div>
+                    {isEditing ? (
+                        <div className="flex flex-col h-full"><textarea className="w-full p-2 text-[10px] font-mono border rounded h-32 mb-2" value={editContent} onChange={(e) => setEditContent(e.target.value)}/><button onClick={handleSave} className="bg-brand-primary text-white text-xs py-1 rounded">保存</button></div>
+                    ) : (
+                        <div className="text-[10px] text-slate-500 font-mono h-32 overflow-y-auto bg-white p-2 rounded border border-slate-100 whitespace-pre-wrap break-words">{content}</div>
+                    )}
+                </div>
+            );
+        };
+
+        const ErrorBanner = ({ message, onClose, type = "error" }) => {
+            const styles = {
+                error: "bg-red-50 border-red-500 text-red-700",
+                warning: "bg-amber-50 border-amber-500 text-amber-700",
+                info: "bg-blue-50 border-blue-500 text-blue-700"
+            };
+            const icons = { error: "alert-circle", warning: "alert-triangle", info: "info" };
+            return (
+                <div className={`${styles[type]} border-l-4 p-4 mb-6 rounded-r shadow-sm flex justify-between items-start animate-fade-in`}>
+                    <div className="flex items-center gap-3"><Icon name={icons[type]} size={24} /><p className="font-bold">{message}</p></div>
+                    <button onClick={onClose} className="opacity-60 hover:opacity-100"><Icon name="x" size={20} /></button>
+                </div>
+            );
+        };
+
+        const Row = ({ label, icon, value, highlight }) => (
+            <div className={`p-4 flex flex-col md:flex-row md:items-center ${highlight ? 'bg-indigo-50/30' : 'bg-white'}`}>
+                <div className="text-xs font-bold text-slate-500 w-40 mb-1 md:mb-0 flex items-center gap-2 tracking-tight">
+                    {icon && <span className={highlight ? "text-brand-primary" : "text-slate-400"}><Icon name={icon} size={16} /></span>} {label}
+                </div>
+                <div className="flex-1 flex items-center gap-3 overflow-hidden min-w-0">
+                    <span className={`text-sm truncate ${highlight ? 'font-mono font-bold text-brand-primary' : 'text-slate-700'}`}>{value}</span>
+                    <CopyButton text={value} className="opacity-100" />
+                </div>
+            </div>
+        );
+
         class ErrorBoundary extends React.Component {
             constructor(props) { super(props); this.state = { hasError: false, error: null }; }
             static getDerivedStateFromError(error) { return { hasError: true, error }; }
             render() {
-                if (this.state.hasError) {
-                    return (
-                        <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-                            <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-                                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Icon name="AlertTriangle" size={32} className="text-red-500" />
-                                </div>
-                                <h2 className="text-xl font-bold text-slate-800 mb-2">エラーが発生しました</h2>
-                                <p className="text-slate-500 text-sm mb-4">{this.state.error?.message}</p>
-                                <button onClick={() => window.location.reload()} className="px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700">
-                                    再読み込み
-                                </button>
-                            </div>
-                        </div>
-                    );
-                }
+                if (this.state.hasError) return <div className="p-6 bg-red-50 text-red-800 border border-red-200 rounded-lg m-4"><h2 className="font-bold text-lg mb-2">エラー</h2><p className="text-sm font-mono">{this.state.error?.toString()}</p></div>;
                 return this.props.children;
             }
         }
 
-        // ===== メインアプリ =====
-        const App = () => {
-            // State
-            const [currentUser, setCurrentUser] = React.useState(null);
-            const [isLoading, setIsLoading] = React.useState(false);
-            const [error, setError] = React.useState('');
-            const [logs, setLogs] = React.useState([]);
-            const [result, setResult] = React.useState(null);
-            
-            // 入力フォーム
-            const [inputMode, setInputMode] = React.useState('asin');
-            const [asinInput, setAsinInput] = React.useState('');
-            const [janInput, setJanInput] = React.useState('');
-            const [imageFile, setImageFile] = React.useState(null);
-            const [imagePreview, setImagePreview] = React.useState(null);
-            
-            // 設定
-            const [showSettings, setShowSettings] = React.useState(false);
-            const [showUserManager, setShowUserManager] = React.useState(false);
-            const [config, setConfig] = React.useState(() => {
-                const saved = localStorage.getItem('packestimate_config');
-                return saved ? JSON.parse(saved) : { keepaApiKey: '', serpApiKey: '', geminiApiKey: '' };
-            });
-            
-            // 梱包資材
-            const [customBoxes, setCustomBoxes] = React.useState(() => {
-                const saved = localStorage.getItem('packestimate_boxes');
-                return saved ? JSON.parse(saved) : [
-                    { id: 1, name: '60サイズ', w: 27, d: 20, h: 13 },
-                    { id: 2, name: '80サイズ', w: 37, d: 27, h: 16 },
-                    { id: 3, name: '100サイズ', w: 44, d: 34, h: 22 }
-                ];
-            });
-            const [showBoxConfig, setShowBoxConfig] = React.useState(false);
-            const [newBox, setNewBox] = React.useState({ name: '', w: '', d: '', h: '' });
+        // ========== ログイン画面 ==========
+        const LoginScreen = ({ onLogin }) => {
+            const [username, setUsername] = useState("");
+            const [password, setPassword] = useState("");
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState("");
 
-            // ログイン状態チェック
-            React.useEffect(() => {
-                const savedUser = localStorage.getItem('packestimate_user');
-                if (savedUser) {
-                    setCurrentUser(JSON.parse(savedUser));
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                if (!username || !password) {
+                    setError("ユーザー名とパスワードを入力してください");
+                    return;
+                }
+                setLoading(true); setError("");
+                try {
+                    const result = await server.call('checkLogin', username, password);
+                    if (result.success) {
+                        onLogin(result.username, result.role, password);
+                    } else {
+                        setError(result.message);
+                    }
+                } catch (e) { setError("接続エラー: " + e.message); } 
+                finally { setLoading(false); }
+            };
+
+            return (
+                <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+                    <div className="w-full max-w-md">
+                        <div className="text-center mb-8">
+                            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-primary to-brand-accent rounded-2xl shadow-lg mb-4"><Icon name="box" size={32} className="text-white" /></div>
+                            <h1 className="text-2xl font-bold text-white mb-2">PackEstimate AI Pro</h1>
+                            <span className="dev-badge text-xs px-3 py-1 rounded-full font-bold text-white">DEVELOPMENT</span>
+                            <p className="text-slate-400 text-sm mt-2">越境EC出品サポートシステム (Dev)</p>
+                        </div>
+                        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-2xl p-8 space-y-6">
+                            {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2"><Icon name="alert-circle" size={18} />{error}</div>}
+                            <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2 tracking-wider">ユーザー名</label><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><Icon name="user" size={18} /></span><input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none transition-all" placeholder="ユーザー名を入力" autoComplete="username" /></div></div>
+                            <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2 tracking-wider">パスワード</label><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><Icon name="lock" size={18} /></span><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none transition-all" placeholder="パスワードを入力" autoComplete="current-password" /></div></div>
+                            <button type="submit" disabled={loading} className="w-full py-4 bg-gradient-to-r from-brand-primary to-brand-accent text-white rounded-xl font-bold hover:opacity-90 transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2">{loading ? <div className="loader border-white/30 border-t-white"></div> : <><Icon name="unlock" size={18} />ログイン</>}</button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // ========== ユーザー管理画面 ==========
+        const UserManagement = ({ onClose }) => {
+            const [users, setUsers] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [newUser, setNewUser] = useState({ username: "", password: "", role: "user" });
+            const [message, setMessage] = useState({ type: "", text: "" });
+
+            const loadUsers = async () => {
+                setLoading(true);
+                try {
+                    const result = await server.call('getUsers');
+                    if (result.success) setUsers(result.users);
+                } catch (e) { setMessage({ type: "error", text: e.message }); } 
+                finally { setLoading(false); }
+            };
+            useEffect(() => { loadUsers(); }, []);
+
+            const handleAddUser = async () => {
+                if (!newUser.username || !newUser.password) { setMessage({ type: "error", text: "必須項目不足" }); return; }
+                try {
+                    const result = await server.call('addUser', newUser.username, newUser.password, newUser.role);
+                    if (result.success) { setMessage({ type: "success", text: result.message }); setNewUser({ username: "", password: "", role: "user" }); loadUsers(); } 
+                    else setMessage({ type: "error", text: result.message });
+                } catch (e) { setMessage({ type: "error", text: e.message }); }
+            };
+            const handleToggle = async (username, enabled) => {
+                try { const res = await server.call('toggleUser', username, enabled); res.success ? loadUsers() : setMessage({ type: "error", text: res.message }); } catch (e) { setMessage({ type: "error", text: e.message }); }
+            };
+            const handleDelete = async (username) => {
+                if (!confirm(`削除しますか: ${username}`)) return;
+                try { const res = await server.call('deleteUser', username); res.success ? loadUsers() : setMessage({ type: "error", text: res.message }); } catch (e) { setMessage({ type: "error", text: e.message }); }
+            };
+            const handleReset = async (username) => {
+                const pass = prompt(`新しいパスワード (${username}):`);
+                if(!pass) return;
+                try { const res = await server.call('resetPassword', username, pass); setMessage({ type: res.success ? "success" : "error", text: res.message }); } catch (e) { setMessage({ type: "error", text: e.message }); }
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl p-6 animate-fade-in border border-slate-100 max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-6"><h3 className="font-bold text-lg flex items-center gap-2 text-slate-800"><Icon name="users" size={20} /> ユーザー管理</h3><button onClick={onClose}><Icon name="x" size={20} /></button></div>
+                        {message.text && <div className={`mb-4 px-4 py-3 rounded-lg text-sm ${message.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>{message.text}</div>}
+                        <div className="bg-slate-50 rounded-xl p-4 mb-6 border border-slate-100"><h4 className="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-1"><Icon name="user-plus" size={14} /> 新規追加</h4><div className="flex flex-col sm:flex-row gap-3"><input type="text" placeholder="ユーザー名" value={newUser.username} onChange={(e) => setNewUser({...newUser, username: e.target.value})} className="flex-1 p-2 border rounded-lg text-sm" /><input type="text" placeholder="パスワード" value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})} className="flex-1 p-2 border rounded-lg text-sm" /><select value={newUser.role} onChange={(e) => setNewUser({...newUser, role: e.target.value})} className="p-2 border rounded-lg text-sm bg-white"><option value="user">一般ユーザー</option><option value="admin">管理者</option></select><button onClick={handleAddUser} className="px-4 py-2 bg-brand-primary text-white rounded-lg text-sm font-bold">追加</button></div></div>
+                        <div className="space-y-2">{loading ? <div className="text-center py-8 text-slate-400">Loading...</div> : users.map(user => (<div key={user.username} className={`flex items-center justify-between p-4 rounded-xl border ${user.enabled ? 'bg-white border-slate-200' : 'bg-red-50 border-red-200'}`}><div className="flex items-center gap-3"><div className={`w-10 h-10 rounded-full flex items-center justify-center ${user.role === 'admin' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-500'}`}><Icon name={user.role === 'admin' ? 'shield' : 'user'} size={18} /></div><div><div className="font-bold text-slate-800 flex items-center gap-2">{user.username}{user.role === 'admin' && <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold">管理者</span>}{!user.enabled && <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">無効</span>}</div><div className="text-[10px] text-slate-400">最終ログイン: {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'なし'}</div></div></div><div className="flex items-center gap-2"><button onClick={() => handleReset(user.username)} className="p-2 text-slate-400 hover:text-brand-primary"><Icon name="key" size={16} /></button><button onClick={() => handleToggle(user.username, !user.enabled)} className="p-2 text-slate-400 hover:text-green-500"><Icon name={user.enabled ? 'user-x' : 'check'} size={16} /></button><button onClick={() => handleDelete(user.username)} className="p-2 text-slate-400 hover:text-red-500"><Icon name="trash-2" size={16} /></button></div></div>))}</div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ========== システム設定画面（管理者のみ） ==========
+        const SystemConfig = ({ currentUser, onClose }) => {
+            const [config, setConfig] = useState({ geminiKey: "", keepaKey: "", serpApiKey: "" });
+            const [status, setStatus] = useState(null);
+            const [loading, setLoading] = useState(false);
+            const [msg, setMsg] = useState("");
+
+            useEffect(() => {
+                server.call('getSystemConfigStatus', currentUser.username, currentUser.password).then(res => setStatus(res));
+            }, []);
+
+            const handleSave = async () => {
+                setLoading(true);
+                try {
+                    const res = await server.call('saveSystemConfig', currentUser.username, currentUser.password, config);
+                    if (res.success) {
+                        setMsg("✅ 設定をサーバーに保存しました。");
+                        setConfig({ geminiKey: "", keepaKey: "", serpApiKey: "" });
+                        setStatus({ ...status, hasGemini: !!config.geminiKey || status?.hasGemini, hasKeepa: !!config.keepaKey || status?.hasKeepa, hasSerp: !!config.serpApiKey || status?.hasSerp });
+                    } else { setMsg("❌ " + res.message); }
+                } catch (e) { setMsg("❌ " + e.message); }
+                setLoading(false);
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-white w-full max-w-lg rounded-xl p-6 shadow-2xl animate-fade-in">
+                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><Icon name="settings"/> システム設定 (管理者用)</h3>
+                        <p className="text-sm text-slate-500 mb-4 bg-yellow-50 p-2 rounded border border-yellow-100">APIキーはサーバーに保存され、外注スタッフにも共有されます。</p>
+                        <div className="space-y-4">
+                            <div><label className="text-xs font-bold block mb-1">Gemini API Key {status?.hasGemini ? "✅設定済" : "❌未設定"}</label><input type="password" value={config.geminiKey} onChange={e => setConfig({...config, geminiKey: e.target.value})} className="w-full p-2 border rounded" placeholder="AI Studio Key..." /></div>
+                            <div><label className="text-xs font-bold block mb-1">Keepa API Key {status?.hasKeepa ? "✅設定済" : "❌未設定"}</label><input type="password" value={config.keepaKey} onChange={e => setConfig({...config, keepaKey: e.target.value})} className="w-full p-2 border rounded" /></div>
+                            <div><label className="text-xs font-bold block mb-1">SerpAPI Key {status?.hasSerp ? "✅設定済" : "❌未設定"}</label><input type="password" value={config.serpApiKey} onChange={e => setConfig({...config, serpApiKey: e.target.value})} className="w-full p-2 border rounded" /></div>
+                        </div>
+                        {msg && <div className="mt-4 text-sm font-bold">{msg}</div>}
+                        <div className="mt-6 flex justify-end gap-3"><button onClick={onClose} className="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded">閉じる</button><button onClick={handleSave} disabled={loading} className="px-4 py-2 bg-slate-900 text-white rounded font-bold">{loading ? "保存中..." : "サーバーに保存"}</button></div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ========== メインアプリ ==========
+        const App = () => {
+            const SESSION_KEY = 'pack_estimate_session_dev';
+            const BOXES_KEY = 'pack_estimate_boxes_dev';
+            const TEMPLATES_KEY = 'pack_estimate_custom_template_dev';
+            const BUFFER_PREF_KEY = 'pack_estimate_buffer_pref_dev';
+
+            const [isLoggedIn, setIsLoggedIn] = useState(false);
+            const [currentUser, setCurrentUser] = useState(null);
+            const [showUserManagement, setShowUserManagement] = useState(false);
+            const [showSystemConfig, setShowSystemConfig] = useState(false);
+            const [serpApiUsage, setSerpApiUsage] = useState(null);
+            const [customBoxes, setCustomBoxes] = useState([{ id: 1, name: '60サイズ', w: 30, d: 20, h: 10 }, { id: 2, name: '80サイズ', w: 35, d: 25, h: 20 }]);
+            const [showBoxConfig, setShowBoxConfig] = useState(false);
+            const [newBox, setNewBox] = useState({ name: "", w: "", d: "", h: "" });
+            const [buffer, setBuffer] = useState({ size: 0, weight: 0 });
+            const [isBufferDefault, setIsBufferDefault] = useState(false);
+            const [customTemplate, setCustomTemplate] = useState("ここに独自のDDPテンプレートなどを保存できます。");
+            
+            // Input States
+            const [title, setTitle] = useState("");
+            const [rivalTitle, setRivalTitle] = useState("");
+            const [category, setCategory] = useState("");
+            const [count, setCount] = useState(1);
+            const [jan, setJan] = useState(""); 
+            const [asin, setAsin] = useState(""); 
+            const [image, setImage] = useState(null);
+            const [imageBase64, setImageBase64] = useState("");
+            const [images, setImages] = useState([]);
+            const [rawResult, setRawResult] = useState(null);
+            const [loading, setLoading] = useState(false);
+            const [logs, setLogs] = useState([]);
+            const [history, setHistory] = useState([]);
+            const [error, setError] = useState("");
+            const [warning, setWarning] = useState("");
+            const [lensResults, setLensResults] = useState(null);
+            const fileInputRef = useRef(null);
+
+            const handleLogin = (username, role, password) => {
+                setIsLoggedIn(true);
+                setCurrentUser({ username, role, password });
+                localStorage.setItem(SESSION_KEY, JSON.stringify({ username, role, password, timestamp: Date.now() }));
+            };
+            const handleLogout = () => { setIsLoggedIn(false); setCurrentUser(null); localStorage.removeItem(SESSION_KEY); };
+
+            useEffect(() => {
+                const savedSession = localStorage.getItem(SESSION_KEY);
+                if (savedSession) {
+                    try {
+                        const s = JSON.parse(savedSession);
+                        if (Date.now() - s.timestamp < 24 * 60 * 60 * 1000) {
+                            server.call('validateSession').then(() => {
+                                setIsLoggedIn(true);
+                                setCurrentUser(s);
+                            }).catch(() => localStorage.removeItem(SESSION_KEY));
+                        } else localStorage.removeItem(SESSION_KEY);
+                    } catch(e) { localStorage.removeItem(SESSION_KEY); }
                 }
             }, []);
 
-            // 設定保存
-            React.useEffect(() => {
-                localStorage.setItem('packestimate_config', JSON.stringify(config));
-            }, [config]);
+            useEffect(() => {
+                if (!isLoggedIn) return;
+                const savedBoxes = localStorage.getItem(BOXES_KEY); if (savedBoxes) try { setCustomBoxes(JSON.parse(savedBoxes)); } catch(e) {}
+                const savedBuffer = localStorage.getItem(BUFFER_PREF_KEY); if (savedBuffer) try { const b = JSON.parse(savedBuffer); setBuffer(b); setIsBufferDefault(true); } catch(e){}
+                const savedTmpl = localStorage.getItem(TEMPLATES_KEY); if (savedTmpl) setCustomTemplate(savedTmpl);
+                server.call('checkSerpAPIUsage').then(res => { if(res.success) setSerpApiUsage(res); }).catch(()=>{});
+            }, [isLoggedIn]);
 
-            // 梱包資材保存
-            React.useEffect(() => {
-                localStorage.setItem('packestimate_boxes', JSON.stringify(customBoxes));
-            }, [customBoxes]);
+            useEffect(() => localStorage.setItem(BOXES_KEY, JSON.stringify(customBoxes)), [customBoxes]);
+            useEffect(() => { isBufferDefault ? localStorage.setItem(BUFFER_PREF_KEY, JSON.stringify(buffer)) : localStorage.removeItem(BUFFER_PREF_KEY); }, [buffer, isBufferDefault]);
 
-            // ログ追加
-            const addLog = (message, type = 'info') => {
-                const time = new Date().toLocaleTimeString('ja-JP');
-                const icons = { info: '📦', success: '✅', error: '❌', ai: '🔮', keepa: '🟠' };
-                setLogs(prev => [...prev, { time, message, type, icon: icons[type] || '📦' }]);
+            const handleImageUpload = (e) => { 
+                const file = e.target.files[0]; 
+                if (file) { setImage(URL.createObjectURL(file)); const r = new FileReader(); r.onloadend = () => setImageBase64(r.result.split(',')[1]); r.readAsDataURL(file); setError(""); setLensResults(null); } 
+            };
+            const handleClear = () => { setTitle(""); setRivalTitle(""); setCount(1); setJan(""); setAsin(""); setCategory(""); setImage(null); setImageBase64(""); setRawResult(null); setError(""); setWarning(""); setLogs([]); setImages([]); setLensResults(null); if (!isBufferDefault) setBuffer({ size: 0, weight: 0 }); if (fileInputRef.current) fileInputRef.current.value = ""; };
+            const addLog = (msg) => setLogs(p => [...p, msg]);
+            const handleAddBox = () => { if (!newBox.name || !newBox.w) return; setCustomBoxes([...customBoxes, { id: Date.now(), name: newBox.name, w: Number(newBox.w), d: Number(newBox.d), h: Number(newBox.h) }]); setNewBox({ name: "", w: "", d: "", h: "" }); };
+            const handleDeleteBox = (id) => setCustomBoxes(customBoxes.filter(b => b.id !== id));
+            const handleSaveCustomTemplate = (c) => { setCustomTemplate(c); localStorage.setItem(TEMPLATES_KEY, c); };
+            const handleDeleteImage = (i) => setImages(p => p.filter((_, idx) => idx !== i));
+
+            // Utils
+            const parseDims = (s) => { if(!s || s==="不明") return null; const n=s.match(/(\d+(\.\d+)?)/g); return n && n.length>=3 ? [parseFloat(n[0]),parseFloat(n[1]),parseFloat(n[2])] : null; };
+            const getDefaultDims = (c) => { switch(c) { case "フィギュア・ねんどろいど": return [21, 18, 8]; case "トレカ・カードゲーム": return [15, 10, 5]; case "ゲームソフト・周辺機器": return [17, 11, 2]; case "書籍・コミック": return [26, 19, 2]; case "アパレル": return [35, 25, 5]; default: return [20, 15, 10]; } };
+            const getDefaultWeight = (c) => { switch(c) { case "フィギュア・ねんどろいど": return 350; case "トレカ・カードゲーム": return 150; case "ゲームソフト・周辺機器": return 100; case "書籍・コミック": return 300; case "アパレル": return 250; default: return 200; } };
+            const cleanTitle = (s) => !s || s==="不明" ? s : s.replace(/[^\x20-\x7E]/g, "").replace(/\s+/g, " ").trim();
+            const isLithiumDetected = (s) => s && s!=="不明" && (s.toLowerCase().includes("yes") || s.includes("あり") || s.includes("有") || s.includes("内蔵") || s.includes("included"));
+            const calculateShippingSize = (w, d, h) => { if (!w) return { total: "--", class: "--" }; const total = Math.ceil(w + d + h); let sizeClass = total <= 60 ? "60サイズ" : total <= 80 ? "80サイズ" : total <= 100 ? "100サイズ" : total <= 120 ? "120サイズ" : total <= 140 ? "140サイズ" : total <= 160 ? "160サイズ" : "170サイズ以上"; return { total: `${total}cm`, class: sizeClass }; };
+            const calculateVolumetricWeight = (w, d, h, div) => !w ? "--" : `${Math.round((w * d * h) / div * 1000)}g`;
+
+            const KeepaImage = ({ imgId, index, onDelete }) => {
+                const [isLow, setIsLow] = useState(false);
+                const url = `https://images-na.ssl-images-amazon.com/images/I/${imgId}`;
+                return (<div className={`flex-shrink-0 relative group rounded-lg overflow-hidden border-2 transition-all ${isLow ? 'border-red-500' : 'border-slate-200 hover:border-brand-primary'}`}><img src={url} onLoad={(e) => Math.max(e.target.naturalWidth,e.target.naturalHeight)<500 && setIsLow(true)} className="h-24 w-24 object-cover bg-white"/><button onClick={() => onDelete(index)} className="absolute top-1 right-1 bg-black/50 hover:bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100"><Icon name="x" size={12}/></button>{isLow && <div className="absolute top-1 left-1 bg-red-500 text-white text-[8px] px-1 rounded font-bold">Low Res</div>}</div>);
             };
 
-            // ログイン処理
-            const handleLogin = async (username, password) => {
-                setIsLoading(true);
-                setError('');
-                try {
-                    const res = await server.call('login', { username, password });
-                    if (res.success) {
-                        const user = { username, role: res.role };
-                        setCurrentUser(user);
-                        localStorage.setItem('packestimate_user', JSON.stringify(user));
-                    } else {
-                        setError(res.message || 'ログインに失敗しました');
-                    }
-                } catch (e) {
-                    setError('通信エラー: ' + e.message);
-                }
-                setIsLoading(false);
-            };
-
-            // ログアウト
-            const handleLogout = () => {
-                setCurrentUser(null);
-                localStorage.removeItem('packestimate_user');
-                setResult(null);
-                setLogs([]);
-            };
-
-            // 画像選択
-            const handleImageSelect = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    setImageFile(file);
-                    const reader = new FileReader();
-                    reader.onload = (ev) => setImagePreview(ev.target.result);
-                    reader.readAsDataURL(file);
-                }
-            };
-
-            // 画像クリア
-            const clearImage = () => {
-                setImageFile(null);
-                setImagePreview(null);
-            };
-
-            // 解析実行
-            const handleAnalyze = async () => {
-                setIsLoading(true);
-                setError('');
-                setResult(null);
-                setLogs([]);
-                
-                addLog('解析開始（Dev版）...', 'info');
+            // ★Geminiへのリクエスト統合版
+            const handleAnalyze = async (forceAI = false) => {
+                setError(""); setWarning("");
+                if (!imageBase64 && !jan && !asin && !title) { setError("解析に必要な情報がありません"); return; }
+                setLoading(true); setRawResult(null); setLogs([]); setImages([]); addLog("解析開始 (Gemini 3 Flash - Dev)...");
 
                 try {
-                    let asin = asinInput.trim();
-                    let jan = janInput.trim();
                     let keepaData = null;
-                    let imageBase64 = null;
+                    let usedSource = "AI予測";
+                    let rawDimsKeepa = null;
+                    let rawWeightKeepa = null;
+                    let imagesKeepa = [];
+                    let eanKeepa = null;
+                    let googleLensInfo = null;
 
-                    // 画像がある場合はBase64に変換
-                    if (imageFile) {
-                        imageBase64 = imagePreview.split(',')[1];
+                    // 1. Google Lens (Server-side)
+                    if (imageBase64 && !forceAI) {
+                        addLog("🔍 Google Lens検索中...");
+                        const lensRes = await server.call('searchImageWithSerpAPI', imageBase64);
+                        if (lensRes.limitReached) { setWarning(lensRes.message); addLog("⚠️ SerpAPI制限超過 → AIのみ"); }
+                        else if (lensRes.success) {
+                            googleLensInfo = lensRes; setLensResults(lensRes); addLog(`✅ 商品特定: ${lensRes.title || '類似'}`);
+                            if (!title && lensRes.title) setTitle(lensRes.title);
+                        } else addLog("⚠️ Google Lens結果なし");
                     }
 
-                    // 画像からASIN検索
-                    if (imageBase64 && !asin && !jan) {
-                        addLog('Google Lens検索中...', 'info');
-                        const lensRes = await server.call('googleLensSearch', { 
-                            imageBase64,
-                            serpApiKey: config.serpApiKey 
-                        });
-                        if (lensRes.success && lensRes.asin) {
-                            asin = lensRes.asin;
-                            addLog(`ASIN検出: ${asin}`, 'success');
-                        } else if (lensRes.jan) {
-                            jan = lensRes.jan;
-                            addLog(`JAN検出: ${jan}`, 'success');
-                        }
+                    // 2. Keepa (Server-side)
+                    if (!forceAI && (jan || asin)) {
+                        addLog("🔍 Keepa検索中...");
+                        const kRes = await server.call('fetchKeepaData', asin ? 'asin' : 'jan', asin || jan);
+                        if (kRes.success) {
+                            addLog("✅ Keepaデータ取得");
+                            keepaData = kRes; usedSource = "Keepa (Amazon公式)";
+                            if (kRes.packageHeight > 0) rawDimsKeepa = [kRes.packageLength/10, kRes.packageWidth/10, kRes.packageHeight/10];
+                            if (kRes.packageWeight > 0) rawWeightKeepa = kRes.packageWeight;
+                            imagesKeepa = kRes.images; eanKeepa = kRes.ean;
+                        } else addLog("⚠️ Keepaデータなし");
                     }
 
-                    // Keepaデータ取得
-                    if (asin || jan) {
-                        addLog('Keepa検索中...', 'keepa');
-                        const keepaRes = await server.call('fetchKeepaData', {
-                            asin: asin || null,
-                            jan: jan || null,
-                            keepaApiKey: config.keepaApiKey
-                        });
-                        if (keepaRes.success) {
-                            keepaData = keepaRes;
-                            asin = keepaRes.asin || asin;
-                            addLog('Keepaデータ取得', 'success');
-                        } else {
-                            addLog('Keepaデータなし: ' + (keepaRes.message || ''), 'error');
-                        }
+                    // 3. Gemini Vision & JSON Generation
+                    addLog("🧠 Gemini 3 Flash 解析中...");
+                    
+                    const effTitle = title || (googleLensInfo?.title) || "";
+                    
+                    const systemPrompt = `You are an expert professional seller exporting from Japan to eBay.
+Your goal is to create high-converting, SEO-optimized product data.
+
+# Rules
+1. **Title**: Must include "Japan", "Authentic" (if applicable), and key product features. STRICTLY 80 characters or less. NO "New Product" or generic fillers.
+2. **Description (CRITICAL)**:
+   - Rewrite the product description specifically for eBay.
+   - **STRICTLY EXCLUDE**: Any mentions of "Amazon", "Pre-order", "Reservation", "Limited Edition bonuses" (unless intrinsic to the item), "Prime", or specific retailer availability.
+   - Focus on the item's features, specs, and condition.
+   - Highlight that it is an authentic item shipped from Japan.
+3. **Specs**: Do not use "Unknown". Estimate realistic values based on the product image and category.
+4. **Output**: Strictly JSON format only.
+
+# Input Context
+- Image provided: ${imageBase64 ? 'Yes (Analyze visual details closely)' : 'No'}
+- Category: ${category}
+- Quantity: ${count}
+- Rival Item Title: ${rivalTitle || "None (Create original)"}
+- Keepa Data: ${JSON.stringify(keepaData || "None")}
+- Google Lens Data: ${JSON.stringify(googleLensInfo || "None")}
+`;
+
+                    const userPrompt = `Generate a JSON object for this item:
+{
+  "jpTitle": "Official Japanese Product Name",
+  "enTitle": "SEO Optimized English Title (MUST be 80 chars or less)",
+  "descriptionJp": "Japanese description",
+  "descriptionEn": "Professional eBay description. NO Amazon/Pre-order/Retailer specific text.",
+  "lithium": "あり/なし (Detect from image/type)",
+  "battery": "あり/なし (Detect from image/type)",
+  "htsCode1": "US HTS Code",
+  "htsCode2": "Alternative HTS",
+  "hsCode": "HS Code",
+  "rawSize": "WxDxH (cm) (e.g. 20x15x10)",
+  "sizeType": "Item or Package",
+  "rawWeight": "Weight in grams (e.g. 350)",
+  "jan": "${eanKeepa || jan || "Estimate if possible"}",
+  "asin": "${keepaData?.asin || asin || ""}"
+}`;
+
+                    const payload = {
+                        systemPrompt: systemPrompt,
+                        userPrompt: userPrompt,
+                        imageBase64: imageBase64 
+                    };
+
+                    const finalRes = await server.call('callGemini_Server', payload);
+                    
+                    let parsed;
+                    try { 
+                        const cleanJson = finalRes.content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+                        parsed = JSON.parse(cleanJson); 
+                    } 
+                    catch (e) { 
+                        console.error("Parse Error", e);
+                        parsed = { jpTitle: effTitle, enTitle: "Product Analysis Failed", descriptionJp: "解析エラー", rawSize: "20x15x10", rawWeight: "200", sizeType: "Item", lithium: "なし" }; 
                     }
 
-                    // Gemini解析
-                    addLog('Gemini解析中...', 'ai');
-                    const geminiRes = await server.call('callGemini_Server', {
-                        keepaData,
-                        imageBase64,
-                        geminiApiKey: config.geminiApiKey
+                    // 80文字制限を強制執行
+                    let safeEnTitle = cleanTitle(parsed.enTitle) || "";
+                    if (safeEnTitle.length > 80) {
+                        safeEnTitle = safeEnTitle.substring(0, 80);
+                    }
+
+                    // Merge Data
+                    let rawDims, rawWeight, sizeType;
+                    if (rawDimsKeepa && rawWeightKeepa && !forceAI) { rawDims = rawDimsKeepa; rawWeight = rawWeightKeepa; sizeType = "Package"; addLog("📦 Keepaサイズ適用"); } 
+                    else { rawDims = parseDims(parsed.rawSize) || getDefaultDims(category); rawWeight = parseInt(parsed.rawWeight) || getDefaultWeight(category); sizeType = parsed.sizeType || "Item"; }
+
+                    if (!isBufferDefault) setBuffer({ size: (sizeType.includes("Package")||usedSource.includes("Keepa")) ? 0 : 2, weight: (sizeType.includes("Package")||usedSource.includes("Keepa")) ? 0 : 100 });
+                    setImages(imagesKeepa || []);
+
+                    setRawResult({
+                        source: googleLensInfo ? "Google Lens + Gemini" : usedSource,
+                        rawDims, rawWeight, rawSizeType: sizeType,
+                        jpTitle: parsed.jpTitle || effTitle,
+                        enTitle: safeEnTitle,
+                        descriptionJp: parsed.descriptionJp, descriptionEn: parsed.descriptionEn,
+                        hsCode: parsed.hsCode, htsCode1: parsed.htsCode1, htsCode2: parsed.htsCode2,
+                        lithium: parsed.lithium, battery: parsed.battery,
+                        jan: eanKeepa || parsed.jan || jan, asin: keepaData?.asin || parsed.asin || asin
                     });
+                    addLog("✅ 解析完了");
 
-                    if (geminiRes.success) {
-                        // 画像URL処理
-                        let productImage = null;
-                        if (imagePreview) {
-                            productImage = imagePreview;
-                        } else if (keepaData?.images && keepaData.images.length > 0) {
-                            const imgCode = keepaData.images[0];
-                            if (imgCode.startsWith('http')) {
-                                productImage = imgCode;
-                            } else {
-                                productImage = `https://images-na.ssl-images-amazon.com/images/I/${imgCode}`;
-                            }
-                        }
-
-                        // サイズ計算
-                        const w = keepaData?.packageWidth ? keepaData.packageWidth / 10 : geminiRes.width || 0;
-                        const d = keepaData?.packageLength ? keepaData.packageLength / 10 : geminiRes.depth || 0;
-                        const h = keepaData?.packageHeight ? keepaData.packageHeight / 10 : geminiRes.height || 0;
-                        const weight = keepaData?.packageWeight ? keepaData.packageWeight : geminiRes.weight || 0;
-                        const totalSize = w + d + h;
-
-                        setResult({
-                            titleJa: geminiRes.titleJa || keepaData?.title || '',
-                            titleEn: geminiRes.titleEn || '',
-                            description: geminiRes.description || '',
-                            width: w,
-                            depth: d,
-                            height: h,
-                            weight: weight,
-                            totalSize: totalSize,
-                            battery: geminiRes.battery || 'なし',
-                            asin: asin,
-                            image: productImage,
-                            specs: geminiRes.specs || {}
-                        });
-                        addLog('解析完了！', 'success');
-                    } else {
-                        setError('Gemini解析失敗: ' + (geminiRes.message || ''));
-                        addLog('Gemini解析失敗', 'error');
-                    }
-
-                } catch (e) {
-                    setError('エラー: ' + e.message);
-                    addLog('エラー: ' + e.message, 'error');
-                }
-
-                setIsLoading(false);
+                } catch (e) { console.error(e); setError("処理エラー: " + e.message); } finally { setLoading(false); }
             };
 
-            // 梱包資材追加
-            const handleAddBox = () => {
-                if (newBox.name && newBox.w && newBox.d && newBox.h) {
-                    setCustomBoxes(prev => [...prev, { 
-                        id: Date.now(), 
-                        name: newBox.name, 
-                        w: Number(newBox.w), 
-                        d: Number(newBox.d), 
-                        h: Number(newBox.h) 
-                    }]);
-                    setNewBox({ name: '', w: '', d: '', h: '' });
-                }
-            };
+            const displayResult = useMemo(() => {
+                if (!rawResult) return null;
+                const fd = rawResult.rawDims.map(d => d + buffer.size);
+                const fw = rawResult.rawWeight + buffer.weight;
+                return {
+                    ...rawResult,
+                    finalDimsArray: fd.map(d => d.toFixed(1)),
+                    finalDimsString: (<span className="font-mono tracking-tighter"><span className="font-bold">{fd[0].toFixed(1)}</span><span className="text-slate-300 mx-1">×</span><span className="font-bold">{fd[1].toFixed(1)}</span><span className="text-slate-300 mx-1">×</span><span className="font-bold">{fd[2].toFixed(1)}</span></span>),
+                    finalWeight: Math.round(fw),
+                    shipSize: calculateShippingSize(fd[0], fd[1], fd[2]),
+                    volWeight5000: calculateVolumetricWeight(fd[0], fd[1], fd[2], 5000),
+                    volWeight8000: calculateVolumetricWeight(fd[0], fd[1], fd[2], 8000)
+                };
+            }, [rawResult, buffer]);
 
-            // 梱包資材削除
-            const handleDeleteBox = (id) => {
-                setCustomBoxes(prev => prev.filter(b => b.id !== id));
-            };
+            useEffect(() => {
+                if(displayResult) setHistory(p => [{ id: Date.now(), title: displayResult.jpTitle, category, size: `${displayResult.finalDimsArray.join('×')}cm`, weight: `${displayResult.finalWeight}g`, time: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), provider: displayResult.source, lithium: displayResult.lithium }, ...p].slice(0,50));
+            }, [displayResult?.jpTitle]);
 
-            // ログイン画面
-            if (!currentUser) {
-                return <LoginScreen onLogin={handleLogin} isLoading={isLoading} error={error} />;
-            }
+            if (!isLoggedIn) return <LoginScreen onLogin={handleLogin} />;
 
-            // メイン画面
             return (
-                <div className="min-h-screen bg-slate-100">
-                    {/* ヘッダー */}
-                    <header className="bg-slate-900 text-white py-3 px-4 shadow-lg sticky top-0 z-50">
-                        <div className="max-w-4xl mx-auto flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <h1 className="text-lg font-bold">PackEstimate AI Pro</h1>
-                                <span className="dev-badge text-xs px-2 py-0.5 rounded-full font-bold text-white">DEV</span>
+                <div className="min-h-screen flex flex-col text-slate-850 bg-slate-50">
+                    <header className="bg-gradient-to-r from-slate-900 to-slate-800 text-white sticky top-0 z-50 shadow-md">
+                        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+                            <div className="flex items-center gap-3 font-bold text-lg">
+                                <Icon name="box"/> PackEstimate AI Pro
+                                <span className="dev-badge text-[10px] px-2 py-0.5 rounded-full font-bold text-white">DEV</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                {currentUser.role === 'admin' && (
-                                    <>
-                                        <button onClick={() => setShowUserManager(true)} className="p-2 hover:bg-slate-800 rounded-lg" title="ユーザー管理">
-                                            <Icon name="Users" size={18} />
-                                        </button>
-                                        <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-800 rounded-lg" title="設定">
-                                            <Icon name="Settings" size={18} />
-                                        </button>
-                                    </>
-                                )}
-                                <span className="text-sm text-slate-400">{currentUser.username}</span>
-                                <button onClick={handleLogout} className="p-2 hover:bg-slate-800 rounded-lg" title="ログアウト">
-                                    <Icon name="LogOut" size={18} />
-                                </button>
+                            <div className="flex items-center gap-4 text-sm">
+                                <div className="hidden md:flex bg-slate-800 px-3 py-1 rounded-full items-center gap-2 border border-slate-700"><Icon name="user" size={14}/><span>{currentUser.username}</span>{currentUser.role==='admin' && <span className="text-[10px] bg-amber-500 px-1.5 rounded">ADMIN</span>}</div>
+                                {currentUser.role === 'admin' && <button onClick={() => setShowUserManagement(true)} className="hover:text-amber-300"><Icon name="users"/></button>}
+                                {currentUser.role === 'admin' && <button onClick={() => setShowSystemConfig(true)} className="hover:text-indigo-300"><Icon name="settings"/></button>}
+                                <button onClick={handleLogout} className="hover:text-red-300"><Icon name="log-out"/></button>
                             </div>
                         </div>
                     </header>
 
-                    {/* メインコンテンツ */}
-                    <main className="max-w-4xl mx-auto p-4 pb-20">
-                        {/* 入力セクション */}
-                        <div className="bg-white rounded-2xl shadow-sm p-6 mb-4">
-                            {/* 入力モード切替 */}
-                            <div className="flex gap-2 mb-4">
-                                {['asin', 'jan', 'image'].map(mode => (
-                                    <button
-                                        key={mode}
-                                        onClick={() => setInputMode(mode)}
-                                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                                            inputMode === mode 
-                                                ? 'bg-slate-800 text-white' 
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                        }`}
-                                    >
-                                        {mode === 'asin' ? 'ASIN' : mode === 'jan' ? 'JAN' : '画像'}
-                                    </button>
-                                ))}
+                    {showUserManagement && <UserManagement onClose={() => setShowUserManagement(false)} />}
+                    {showSystemConfig && <SystemConfig currentUser={currentUser} onClose={() => setShowSystemConfig(false)} />}
+
+                    <main className="max-w-7xl mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
+                        <div className="flex-1 space-y-6">
+                            {error && <ErrorBanner message={error} onClose={() => setError("")} type="error" />}
+                            {warning && <ErrorBanner message={warning} onClose={() => setWarning("")} type="warning" />}
+                            
+                            <div className="bg-white rounded-xl shadow border border-slate-200 p-6 space-y-6">
+                                <div className="relative border-2 border-dashed border-slate-300 rounded-xl p-10 text-center hover:bg-slate-50 transition-colors group cursor-pointer">
+                                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                                    {image ? <div className="relative"><img src={image} className="max-h-48 mx-auto rounded-lg shadow-md object-contain" /><div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg text-white font-bold gap-2"><Icon name="camera" /> 画像を変更</div></div> : <div className="text-slate-400 group-hover:text-brand-primary transition-colors"><div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-brand-primary/10"><Icon name="camera" size={32} /></div><p className="font-bold">画像をアップロード</p></div>}
+                                </div>
+                                {lensResults?.possibleTitles?.length > 0 && <div className="bg-serp-light/50 border border-serp/30 rounded-xl p-4 animate-fade-in"><h4 className="text-xs font-bold text-serp-dark uppercase mb-2 flex items-center gap-1"><Icon name="eye" size={14}/> Lens結果</h4><div className="space-y-1">{lensResults.possibleTitles.slice(0,3).map((t,i)=><button key={i} onClick={()=>setTitle(t)} className={`w-full text-left text-sm p-2 rounded-lg transition-colors ${title===t?'bg-serp text-white':'bg-white hover:bg-serp/10'}`}>{t}</button>)}</div></div>}
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div className="md:col-span-2"><label className="block text-xs font-bold text-slate-500 uppercase mb-1">タイトル</label><input type="text" value={title} onChange={e=>setTitle(e.target.value)} className="w-full p-3 border rounded-lg" /></div>
+                                    <div className="md:col-span-2"><label className="block text-xs font-bold text-slate-500 uppercase mb-1">ライバル商品 (英語)</label><input type="text" value={rivalTitle} onChange={e=>setRivalTitle(e.target.value)} className="w-full p-3 border rounded-lg" /></div>
+                                    
+                                    <div className="bg-indigo-50 p-2 rounded-lg border border-indigo-100">
+                                        <label className="block text-xs font-bold text-brand-primary uppercase mb-1 flex justify-between">
+                                            <span>ASIN (推奨)</span>
+                                            <span className="text-[10px] bg-brand-primary text-white px-1.5 rounded">高精度</span>
+                                        </label>
+                                        <input type="text" value={asin} onChange={e=>setAsin(e.target.value)} placeholder="B0..." className="w-full p-3 border border-indigo-200 rounded-lg font-mono focus:ring-2 focus:ring-brand-primary outline-none" />
+                                        <p className="text-[10px] text-indigo-400 mt-1">※特定の商品ページを解析したい場合はこちら</p>
+                                    </div>
+
+                                    <div className="p-2">
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">JAN / UPC</label>
+                                        <input type="text" value={jan} onChange={e=>setJan(e.target.value)} placeholder="バーコード数字" className="w-full p-3 border rounded-lg font-mono" />
+                                        <p className="text-[10px] text-slate-400 mt-1">※セット品がヒットする可能性があります</p>
+                                    </div>
+
+                                    <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">数量</label><input type="number" value={count} onChange={e=>setCount(e.target.value)} className="w-full p-3 border rounded-lg" /></div>
+                                    <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">カテゴリ</label><select value={category} onChange={e=>setCategory(e.target.value)} className="w-full p-3 border rounded-lg bg-white"><option value="" disabled>選択...</option><option value="フィギュア・ねんどろいど">フィギュア・ねんどろいど</option><option value="トレカ・カードゲーム">トレカ・カードゲーム</option><option value="ゲームソフト・周辺機器">ゲームソフト・周辺機器</option><option value="書籍・コミック">書籍・コミック</option><option value="アパレル">アパレル</option><option value="その他">その他</option></select></div>
+                                </div>
+
+                                <div className="flex gap-3 pt-2"><button onClick={handleClear} className="px-5 rounded-xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200"><Icon name="rotate-ccw" size={20} /></button><button onClick={()=>handleAnalyze(false)} disabled={loading} className="flex-1 py-4 rounded-xl font-bold text-white shadow-lg flex justify-center items-center gap-3 bg-gradient-to-r from-serp via-keepa to-brand-primary">{loading?<div className="loader border-white/30 border-t-white"></div>:<Icon name="search" size={20}/>}{loading?'Processing...':'解析開始'}</button></div>
+                                {loading && logs.length>0 && <div className="bg-slate-900 text-slate-300 p-4 rounded-xl font-mono text-xs space-y-1 max-h-32 overflow-y-auto">{logs.map((l,i)=><div key={i} className="flex gap-2"><span className="text-slate-500">&gt;</span> {l}</div>)}</div>}
                             </div>
 
-                            {/* ASIN入力 */}
-                            {inputMode === 'asin' && (
-                                <input
-                                    type="text"
-                                    value={asinInput}
-                                    onChange={(e) => setAsinInput(e.target.value)}
-                                    placeholder="ASINを入力 (例: B08N5WRWNW)"
-                                    className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
-                                />
-                            )}
-
-                            {/* JAN入力 */}
-                            {inputMode === 'jan' && (
-                                <input
-                                    type="text"
-                                    value={janInput}
-                                    onChange={(e) => setJanInput(e.target.value)}
-                                    placeholder="JANコードを入力 (例: 4901301384157)"
-                                    className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
-                                />
-                            )}
-
-                            {/* 画像アップロード */}
-                            {inputMode === 'image' && (
-                                <div className="space-y-3">
-                                    <label className="block w-full p-6 border-2 border-dashed border-slate-300 rounded-xl text-center cursor-pointer hover:border-slate-400 transition-colors">
-                                        <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
-                                        <Icon name="Upload" size={32} className="mx-auto mb-2 text-slate-400" />
-                                        <p className="text-sm text-slate-500">クリックして画像をアップロード</p>
-                                    </label>
-                                    {imagePreview && (
-                                        <div className="relative inline-block">
-                                            <img src={imagePreview} alt="Preview" className="max-h-32 rounded-lg" />
-                                            <button 
-                                                onClick={clearImage}
-                                                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center"
-                                            >
-                                                <Icon name="X" size={14} />
-                                            </button>
+                            {displayResult && (
+                                <div className={`bg-white rounded-2xl shadow-xl border overflow-hidden animate-fade-in ${displayResult.source.includes('Lens')?'border-serp/40':displayResult.source.includes('Keepa')?'border-keepa/40':'border-ai/40'}`}>
+                                    <div className={`px-6 py-4 border-b flex justify-between items-center backdrop-blur-sm ${displayResult.source.includes('Lens')?'bg-serp/5':displayResult.source.includes('Keepa')?'bg-keepa/5':'bg-ai/5'}`}><div className="flex items-center gap-2 font-bold text-slate-800"><Icon name="box"/> 解析結果</div><div className="text-[10px] font-bold bg-white px-3 py-1 rounded-full border shadow-sm uppercase">{displayResult.source}</div></div>
+                                    <div className="px-6 py-3 bg-slate-50 border-b border-slate-100 flex flex-col sm:flex-row gap-4 items-center justify-between text-xs">
+                                        <div className="flex items-center gap-2"><span className="font-bold text-slate-500">補正:</span><div className="flex items-center bg-white rounded border border-slate-200"><span className="px-2 py-1 bg-slate-100 border-r">サイズ</span><select value={buffer.size} onChange={e=>setBuffer({...buffer,size:Number(e.target.value)})} className="p-1"><option value={0}>+0cm</option><option value={2}>+2cm</option><option value={5}>+5cm</option></select></div><div className="flex items-center bg-white rounded border border-slate-200"><span className="px-2 py-1 bg-slate-100 border-r">重量</span><select value={buffer.weight} onChange={e=>setBuffer({...buffer,weight:Number(e.target.value)})} className="p-1"><option value={0}>+0g</option><option value={100}>+100g</option><option value={200}>+200g</option></select></div></div><label className="flex items-center gap-1 cursor-pointer"><input type="checkbox" checked={isBufferDefault} onChange={e=>setIsBufferDefault(e.target.checked)} /> <span>デフォルト保存</span></label>
+                                    </div>
+                                    {isLithiumDetected(displayResult.lithium) && <div className="bg-red-50 border-y border-red-100 px-6 py-3 flex items-center gap-3 text-red-700 animate-pulse"><Icon name="battery-charging"/> <span className="font-bold">リチウム電池注意</span></div>}
+                                    {images.length>0 && <div className="px-6 pt-6"><h4 className="text-[10px] font-bold text-slate-400 uppercase mb-2">Images</h4><div className="flex gap-2 overflow-x-auto pb-2">{images.slice(0,8).map((id,i)=><KeepaImage key={i} imgId={id} index={i} onDelete={handleDeleteImage}/>)}</div></div>}
+                                    <div className="p-6 space-y-8">
+                                        <div className="flex flex-col md:flex-row gap-6">
+                                            <div className="flex-1 p-2">
+                                                <div className="text-xs font-bold text-slate-400 uppercase mb-2 flex justify-between"><span>予想サイズ</span><CopyButton text={`${displayResult.finalDimsArray.join('\t')}\t${displayResult.finalWeight}`}/></div>
+                                                <div className="flex items-baseline gap-2 text-3xl font-bold text-slate-800 tracking-tighter font-mono">{displayResult.finalDimsString} <span className="text-sm font-sans">cm</span></div>
+                                                
+                                                <div className="mt-3 flex items-center gap-2">
+                                                    {displayResult.shipSize.class && (
+                                                        <div className="inline-flex items-center gap-2 bg-indigo-50 text-brand-primary text-xs px-3 py-1.5 rounded-full font-bold border border-indigo-100">
+                                                            <Icon name="package"/> {displayResult.shipSize.class}
+                                                        </div>
+                                                    )}
+                                                    <span className="text-xs text-slate-400 font-bold bg-slate-100 px-2 py-1.5 rounded-full">合計 {displayResult.shipSize.total}</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 bg-slate-50 rounded-xl p-1 border border-slate-100 flex gap-px shadow-inner"><div className="flex-1 bg-white rounded-l-lg p-3 flex flex-col justify-center items-center"><span className="text-[9px] font-bold text-slate-400">実重量</span><span className="text-xl font-bold">{displayResult.finalWeight}g</span></div><div className="flex-1 bg-white p-3 flex flex-col justify-center items-center relative"><div className="absolute top-0 right-0 bg-slate-100 text-[8px] px-1">/5000</div><span className="text-[9px] font-bold text-slate-400">容積</span><span className="text-xl font-bold text-brand-primary">{displayResult.volWeight5000}</span></div><div className="flex-1 bg-white rounded-r-lg p-3 flex flex-col justify-center items-center relative"><div className="absolute top-0 right-0 bg-indigo-50 text-[8px] px-1">/8000</div><span className="text-[9px] font-bold text-slate-400">Eco</span><span className="text-xl font-bold text-indigo-600">{displayResult.volWeight8000}</span></div></div>
                                         </div>
-                                    )}
+                                        <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100 bg-white">
+                                            <div className="p-4 bg-slate-50/30"><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><Row label="JAN" icon="barcode" value={displayResult.jan||"N/A"} highlight={displayResult.source.includes('Keepa')}/><Row label="ASIN" icon="tag" value={displayResult.asin||"N/A"} highlight={displayResult.source.includes('Keepa')}/></div></div>
+                                            <Row label="JP Title" icon="file-text" value={displayResult.jpTitle} />
+                                            <div className="p-4 bg-indigo-50/10"><div className="flex justify-between items-center"><span className="text-xs font-bold text-slate-500">EN Title</span><div className="flex gap-2"><span className={`text-[10px] px-2 rounded border ${displayResult.enTitle.length<=80?'bg-green-50 text-green-600':'bg-red-50 text-red-600'}`}>{displayResult.enTitle.length}/80</span><CopyButton text={displayResult.enTitle}/></div></div><div className="text-sm font-mono font-bold mt-1">{displayResult.enTitle}</div></div>
+                                            <div className="p-5 bg-indigo-50/20"><div className="flex justify-between mb-3"><span className="text-xs font-bold text-brand-primary">Description (eBay)</span><CopyButton text={displayResult.descriptionEn}/></div><div className="text-sm text-slate-700 bg-white p-4 rounded-xl border border-indigo-100 markdown-body" dangerouslySetInnerHTML={{__html:marked.parse(displayResult.descriptionEn || '')}}></div></div>
+                                            <div className="p-5 bg-white"><div className="flex justify-between mb-3"><span className="text-xs font-bold text-slate-500">Description (JP)</span><CopyButton text={displayResult.descriptionJp}/></div><div className="text-sm text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-100 markdown-body" dangerouslySetInnerHTML={{__html:marked.parse(displayResult.descriptionJp || '')}}></div></div>
+                                            <div className="p-5 bg-white"><h4 className="text-xs font-bold text-slate-500 mb-4">Templates</h4><div className="grid grid-cols-1 md:grid-cols-3 gap-4"><PolicyCard title="DDP" content={DDP_TEMPLATE_DEFAULT} isHighlight/><PolicyCard title="DDU" content={DDU_TEMPLATE_DEFAULT}/><PolicyCard title="Custom" content={customTemplate} isEditable onSave={handleSaveCustomTemplate} isHighlight/></div></div>
+                                            <div className="bg-slate-50/50 p-4 grid grid-cols-2 gap-4 text-xs text-slate-500"><div><span className="font-bold block mb-1">HTS</span><div className="flex gap-2"><span className="font-mono">{displayResult.htsCode1}</span><CopyButton text={displayResult.htsCode1}/></div></div><div><span className="font-bold block mb-1">Battery</span><span>Li: {displayResult.lithium} / Other: {displayResult.battery}</span></div></div>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
-
-                            {/* 解析ボタン */}
-                            <button
-                                onClick={handleAnalyze}
-                                disabled={isLoading}
-                                className="w-full mt-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                            >
-                                {isLoading ? '解析中...' : '解析開始'}
-                            </button>
                         </div>
-
-                        {/* ログ表示 */}
-                        {logs.length > 0 && (
-                            <div className="bg-slate-800 rounded-2xl p-4 mb-4 text-sm font-mono">
-                                {logs.map((log, i) => (
-                                    <div key={i} className={`${
-                                        log.type === 'error' ? 'text-red-400' : 
-                                        log.type === 'success' ? 'text-green-400' : 
-                                        log.type === 'ai' ? 'text-purple-400' :
-                                        log.type === 'keepa' ? 'text-orange-400' :
-                                        'text-slate-300'
-                                    }`}>
-                                        <span className="text-slate-500">[{log.time}]</span> {log.icon} {log.message}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* エラー表示 */}
-                        {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-4">
-                                {error}
-                            </div>
-                        )}
-
-                        {/* 結果表示 */}
-                        {result && (
-                            <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4 animate-fade-in">
-                                <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                                    <Icon name="Package" size={20} />
-                                    解析結果
-                                </h2>
-
-                                {/* 商品画像 */}
-                                {result.image && (
-                                    <div className="flex justify-center">
-                                        <img 
-                                            src={result.image} 
-                                            alt="商品画像" 
-                                            className="max-h-48 rounded-xl shadow-sm"
-                                            onError={(e) => { e.target.style.display = 'none'; }}
-                                        />
-                                    </div>
-                                )}
-
-                                {/* 日本語タイトル */}
-                                <div className="bg-slate-50 rounded-xl p-4">
-                                    <p className="text-xs text-slate-500 mb-1">日本語タイトル</p>
-                                    <p className="text-slate-800 font-medium">{result.titleJa}</p>
-                                </div>
-
-                                {/* 英語タイトル */}
-                                <div className="bg-blue-50 rounded-xl p-4">
-                                    <p className="text-xs text-blue-600 mb-1">英語タイトル ({result.titleEn?.length || 0}/80)</p>
-                                    <p className="text-slate-800 font-medium">{result.titleEn}</p>
-                                </div>
-
-                                {/* 説明文 */}
-                                <div className="bg-slate-50 rounded-xl p-4">
-                                    <p className="text-xs text-slate-500 mb-1">説明文 (EN)</p>
-                                    <p className="text-slate-700 text-sm">{result.description}</p>
-                                </div>
-
-                                {/* サイズ・重量 */}
-                                <div className="grid grid-cols-3 gap-3">
-                                    <div className="bg-slate-50 rounded-xl p-4 text-center">
-                                        <p className="text-xs text-slate-500">サイズ</p>
-                                        <p className="text-lg font-bold text-slate-800 mono">
-                                            {result.width}x{result.depth}x{result.height} cm
-                                        </p>
-                                        {result.totalSize > 0 && (
-                                            <p className="text-xs text-slate-400">3辺合計: {result.totalSize.toFixed(1)}cm</p>
-                                        )}
-                                    </div>
-                                    <div className="bg-slate-50 rounded-xl p-4 text-center">
-                                        <p className="text-xs text-slate-500">重量</p>
-                                        <p className="text-lg font-bold text-slate-800 mono">{result.weight} g</p>
-                                    </div>
-                                    <div className="bg-slate-50 rounded-xl p-4 text-center">
-                                        <p className="text-xs text-slate-500">バッテリー</p>
-                                        <p className="text-lg font-bold text-slate-800">{result.battery}</p>
-                                    </div>
-                                </div>
-
-                                {/* eBay出品ボタン */}
-                                <button
-                                    onClick={() => alert('eBay出品機能は開発中です')}
-                                    className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold hover:from-orange-600 hover:to-red-600 transition-all shadow-lg"
-                                >
-                                    eBayに出品する
-                                </button>
-                            </div>
-                        )}
-
-                        {/* 梱包資材 */}
-                        <div className="bg-white rounded-2xl shadow-sm p-4 mt-4">
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                    <Icon name="Box" size={16} />
-                                    梱包資材
-                                </h3>
-                                <button 
-                                    onClick={() => setShowBoxConfig(!showBoxConfig)}
-                                    className="text-xs text-blue-600 hover:underline"
-                                >
-                                    {showBoxConfig ? '閉じる' : '編集'}
-                                </button>
-                            </div>
-
-                            {showBoxConfig && (
-                                <div className="space-y-3 animate-fade-in mb-4">
-                                    <div className="space-y-2 p-3 bg-slate-50 rounded-xl">
-                                        <input
-                                            type="text"
-                                            placeholder="資材名"
-                                            value={newBox.name}
-                                            onChange={(e) => setNewBox({ ...newBox, name: e.target.value })}
-                                            className="w-full p-2 text-xs border rounded-lg"
-                                        />
-                                        <div className="flex gap-2">
-                                            <input type="number" placeholder="W" value={newBox.w} onChange={(e) => setNewBox({ ...newBox, w: e.target.value })} className="w-1/3 p-2 text-xs border rounded-lg" />
-                                            <input type="number" placeholder="D" value={newBox.d} onChange={(e) => setNewBox({ ...newBox, d: e.target.value })} className="w-1/3 p-2 text-xs border rounded-lg" />
-                                            <input type="number" placeholder="H" value={newBox.h} onChange={(e) => setNewBox({ ...newBox, h: e.target.value })} className="w-1/3 p-2 text-xs border rounded-lg" />
-                                        </div>
-                                        <button onClick={handleAddBox} className="w-full py-1.5 bg-slate-800 text-white text-xs rounded-lg font-bold">
-                                            追加
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
-                                {customBoxes.map(box => (
-                                    <div key={box.id} className="flex justify-between items-center text-xs p-2.5 bg-white border border-slate-100 rounded-lg shadow-sm">
-                                        <span className="font-mono text-slate-700 flex flex-col">
-                                            <span className="font-bold text-slate-800">{box.name}</span>
-                                            <span className="text-[10px] text-slate-400">{box.w}×{box.d}×{box.h}</span>
-                                        </span>
-                                        {showBoxConfig && (
-                                            <button onClick={() => handleDeleteBox(box.id)} className="text-slate-300 hover:text-red-500">
-                                                <Icon name="X" size={14} />
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
+                        <div className="w-full lg:w-80 flex-shrink-0 space-y-6">
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sticky top-24 max-h-[calc(100vh-120px)] flex flex-col"><div className="flex justify-between mb-4 pb-2 border-b"><h3 className="font-bold text-slate-700 text-sm">履歴</h3><button onClick={()=>setHistory([])} className="text-[10px] text-slate-400 hover:text-red-500">クリア</button></div><div className="space-y-3 overflow-y-auto pr-1 flex-1">{history.map(item=><div key={item.id} className="bg-white rounded-lg p-3 border border-slate-100 hover:border-brand-primary/30 cursor-pointer relative"><div className="flex justify-between text-[10px] text-slate-400 mb-1.5"><span>{item.time}</span><span className="bg-slate-100 px-1.5 py-0.5 rounded">{item.provider.split(' ')[0]}</span></div><div className="font-bold text-xs line-clamp-2 mb-2">{item.title}</div><div className="flex gap-2 text-[10px] text-slate-500 bg-slate-50 p-1.5 rounded"><span>{item.size}</span>|<span>{item.weight}</span></div>{isLithiumDetected(item.lithium)&&<div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></div>}</div>)}</div></div>
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4"><div className="flex justify-between items-center mb-3 cursor-pointer hover:bg-slate-50 p-2 rounded-lg -mx-2" onClick={()=>setShowBoxConfig(!showBoxConfig)}><h3 className="font-bold text-slate-700 text-sm">📦 梱包資材</h3><span className="text-xs text-brand-primary">{showBoxConfig?'閉じる':'編集'}</span></div>{showBoxConfig && <div className="space-y-3 animate-fade-in mb-4"><div className="space-y-2 p-3 bg-slate-50 rounded-xl"><input type="text" placeholder="資材名" value={newBox.name} onChange={e=>setNewBox({...newBox,name:e.target.value})} className="w-full p-2 text-xs border rounded-lg" /><div className="flex gap-2"><input type="number" placeholder="W" value={newBox.w} onChange={e=>setNewBox({...newBox,w:e.target.value})} className="w-1/3 p-2 text-xs border rounded-lg" /><input type="number" placeholder="D" value={newBox.d} onChange={e=>setNewBox({...newBox,d:e.target.value})} className="w-1/3 p-2 text-xs border rounded-lg" /><input type="number" placeholder="H" value={newBox.h} onChange={e=>setNewBox({...newBox,h:e.target.value})} className="w-1/3 p-2 text-xs border rounded-lg" /></div><button onClick={handleAddBox} className="w-full py-1.5 bg-slate-800 text-white text-xs rounded-lg font-bold">追加</button></div></div>}<div className="max-h-48 overflow-y-auto space-y-1 pr-1">{customBoxes.map(box=><div key={box.id} className="flex justify-between items-center text-xs p-2.5 bg-white border border-slate-100 rounded-lg shadow-sm"><span className="font-mono text-slate-700 flex flex-col"><span className="font-bold text-slate-800">{box.name}</span><span className="text-[10px] text-slate-400">{box.w}×{box.d}×{box.h}</span></span>{showBoxConfig && <button onClick={()=>handleDeleteBox(box.id)} className="text-slate-300 hover:text-red-500"><Icon name="x" size={14}/></button>}</div>)}</div></div>
                         </div>
                     </main>
-
-                    {/* 設定モーダル */}
-                    {showSettings && (
-                        <SettingsModal 
-                            config={config} 
-                            setConfig={setConfig} 
-                            onClose={() => setShowSettings(false)} 
-                        />
-                    )}
-
-                    {/* ユーザー管理モーダル */}
-                    {showUserManager && (
-                        <UserManagerModal 
-                            currentUser={currentUser}
-                            onClose={() => setShowUserManager(false)} 
-                        />
-                    )}
                 </div>
             );
         };
 
-        // ===== ログイン画面 =====
-        const LoginScreen = ({ onLogin, isLoading, error }) => {
-            const [username, setUsername] = React.useState('');
-            const [password, setPassword] = React.useState('');
-
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                onLogin(username, password);
-            };
-
-            return (
-                <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm">
-                        <div className="text-center mb-6">
-                            <div className="flex items-center justify-center gap-2 mb-2">
-                                <h1 className="text-2xl font-bold text-slate-800">PackEstimate AI Pro</h1>
-                            </div>
-                            <span className="dev-badge text-xs px-3 py-1 rounded-full font-bold text-white">DEVELOPMENT</span>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-600 mb-1">ユーザー名</label>
-                                <input
-                                    type="text"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-300"
-                                    placeholder="admin"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-600 mb-1">パスワード</label>
-                                <input
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-300"
-                                    placeholder="••••••••"
-                                />
-                            </div>
-
-                            {error && (
-                                <div className="text-red-500 text-sm text-center bg-red-50 p-2 rounded-lg">
-                                    {error}
-                                </div>
-                            )}
-
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className="w-full py-3 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 disabled:opacity-50 transition-all"
-                            >
-                                {isLoading ? 'ログイン中...' : 'ログイン'}
-                            </button>
-                        </form>
-
-                        <p className="text-center text-xs text-slate-400 mt-6">
-                            eBay輸出セラー向け商品解析ツール
-                        </p>
-                    </div>
-                </div>
-            );
-        };
-
-        // ===== 設定モーダル =====
-        const SettingsModal = ({ config, setConfig, onClose }) => {
-            const [tempConfig, setTempConfig] = React.useState(config);
-
-            const handleSave = async () => {
-                setConfig(tempConfig);
-                // サーバーにも保存
-                await server.call('saveConfig', { config: tempConfig, adminUser: 'admin' });
-                onClose();
-            };
-
-            return (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-fade-in">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-bold text-slate-800">API設定</h2>
-                            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg">
-                                <Icon name="X" size={20} />
-                            </button>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-600 mb-1">Keepa API Key</label>
-                                <input
-                                    type="password"
-                                    value={tempConfig.keepaApiKey}
-                                    onChange={(e) => setTempConfig({ ...tempConfig, keepaApiKey: e.target.value })}
-                                    className="w-full p-3 border border-slate-200 rounded-xl text-sm"
-                                    placeholder="Keepa APIキー"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-600 mb-1">SerpAPI Key</label>
-                                <input
-                                    type="password"
-                                    value={tempConfig.serpApiKey}
-                                    onChange={(e) => setTempConfig({ ...tempConfig, serpApiKey: e.target.value })}
-                                    className="w-full p-3 border border-slate-200 rounded-xl text-sm"
-                                    placeholder="SerpAPI キー"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-600 mb-1">Gemini API Key</label>
-                                <input
-                                    type="password"
-                                    value={tempConfig.geminiApiKey}
-                                    onChange={(e) => setTempConfig({ ...tempConfig, geminiApiKey: e.target.value })}
-                                    className="w-full p-3 border border-slate-200 rounded-xl text-sm"
-                                    placeholder="Gemini APIキー"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3 mt-6">
-                            <button onClick={onClose} className="flex-1 py-2 border border-slate-200 rounded-xl hover:bg-slate-50">
-                                キャンセル
-                            </button>
-                            <button onClick={handleSave} className="flex-1 py-2 bg-slate-800 text-white rounded-xl hover:bg-slate-700">
-                                保存
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // ===== ユーザー管理モーダル =====
-        const UserManagerModal = ({ currentUser, onClose }) => {
-            const [users, setUsers] = React.useState([]);
-            const [newUser, setNewUser] = React.useState({ username: '', password: '', role: 'user' });
-            const [isLoading, setIsLoading] = React.useState(false);
-
-            // ユーザー一覧取得
-            React.useEffect(() => {
-                loadUsers();
-            }, []);
-
-            const loadUsers = async () => {
-                setIsLoading(true);
-                const res = await server.call('getUsers', { adminUser: currentUser.username });
-                if (res.success) {
-                    setUsers(res.users);
-                }
-                setIsLoading(false);
-            };
-
-            const handleAddUser = async () => {
-                if (!newUser.username || !newUser.password) return;
-                setIsLoading(true);
-                const res = await server.call('addUser', {
-                    username: newUser.username,
-                    password: newUser.password,
-                    role: newUser.role,
-                    adminUser: currentUser.username
-                });
-                if (res.success) {
-                    setNewUser({ username: '', password: '', role: 'user' });
-                    loadUsers();
-                }
-                setIsLoading(false);
-            };
-
-            const handleToggleUser = async (username, enabled) => {
-                setIsLoading(true);
-                await server.call('toggleUser', {
-                    targetUser: username,
-                    enabled: !enabled,
-                    adminUser: currentUser.username
-                });
-                loadUsers();
-            };
-
-            return (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-fade-in max-h-[80vh] overflow-y-auto">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-bold text-slate-800">ユーザー管理</h2>
-                            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg">
-                                <Icon name="X" size={20} />
-                            </button>
-                        </div>
-
-                        {/* 新規ユーザー追加 */}
-                        <div className="bg-slate-50 rounded-xl p-4 mb-4">
-                            <h3 className="text-sm font-bold text-slate-700 mb-3">新規ユーザー追加</h3>
-                            <div className="space-y-2">
-                                <input
-                                    type="text"
-                                    placeholder="ユーザー名"
-                                    value={newUser.username}
-                                    onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-                                    className="w-full p-2 text-sm border rounded-lg"
-                                />
-                                <input
-                                    type="password"
-                                    placeholder="パスワード"
-                                    value={newUser.password}
-                                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                                    className="w-full p-2 text-sm border rounded-lg"
-                                />
-                                <select
-                                    value={newUser.role}
-                                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-                                    className="w-full p-2 text-sm border rounded-lg"
-                                >
-                                    <option value="user">一般ユーザー</option>
-                                    <option value="admin">管理者</option>
-                                </select>
-                                <button
-                                    onClick={handleAddUser}
-                                    disabled={isLoading}
-                                    className="w-full py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                                >
-                                    追加
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* ユーザー一覧 */}
-                        <div className="space-y-2">
-                            {users.map(user => (
-                                <div key={user.username} className="flex items-center justify-between p-3 bg-white border rounded-xl">
-                                    <div>
-                                        <p className="font-medium text-slate-800">{user.username}</p>
-                                        <p className="text-xs text-slate-500">{user.role === 'admin' ? '管理者' : '一般'}</p>
-                                    </div>
-                                    {user.username !== 'admin' && (
-                                        <button
-                                            onClick={() => handleToggleUser(user.username, user.enabled)}
-                                            className={`px-3 py-1 text-xs rounded-lg ${
-                                                user.enabled 
-                                                    ? 'bg-green-100 text-green-700' 
-                                                    : 'bg-red-100 text-red-700'
-                                            }`}
-                                        >
-                                            {user.enabled ? '有効' : '無効'}
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // ===== レンダリング =====
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(
-            <ErrorBoundary>
-                <App />
-            </ErrorBoundary>
-        );
+        root.render(<ErrorBoundary><App /></ErrorBoundary>);
     </script>
 </body>
 </html>
