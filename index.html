@@ -599,7 +599,9 @@ These charges are normally collected by the delivering freight shipping company 
                     const paymentPolicy = availablePolicies.payment.find(p => p.id === listingPolicies.payment);
                     
                     // 商品説明 + DDPテンプレートを結合
-                    const fullDescription = listingDescription + '\n\n' + listingDdpTemplate;
+                    // 改行を<br>に変換してHTMLとして送信
+                    const formatForHtml = (text) => text.replace(/\n/g, '<br>');
+                    const fullDescription = formatForHtml(listingDescription) + '<br><br>' + formatForHtml(listingDdpTemplate);
                     
                     const listingData = {
                         sku,
