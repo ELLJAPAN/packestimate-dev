@@ -463,7 +463,10 @@ These charges are normally collected by the delivering freight shipping company 
             const [category, setCategory] = useState("");
             const [count, setCount] = useState(1);
             const [jan, setJan] = useState(""); 
-            const [asin, setAsin] = useState(""); 
+            const [asin, setAsin] = useState("");
+            const [ebayRefItem, setEbayRefItem] = useState("");
+            const [ebayRefData, setEbayRefData] = useState(null);
+            const [ebayRefLoading, setEbayRefLoading] = useState(false); 
             const [image, setImage] = useState(null);
             const [imageBase64, setImageBase64] = useState("");
             const [images, setImages] = useState([]);
@@ -513,12 +516,35 @@ These charges are normally collected by the delivering freight shipping company 
                 const file = e.target.files[0]; 
                 if (file) { setImage(URL.createObjectURL(file)); const r = new FileReader(); r.onloadend = () => setImageBase64(r.result.split(',')[1]); r.readAsDataURL(file); setError(""); setLensResults(null); } 
             };
-            const handleClear = () => { setTitle(""); setRivalTitle(""); setCount(1); setJan(""); setAsin(""); setCategory(""); setImage(null); setImageBase64(""); setRawResult(null); setError(""); setWarning(""); setLogs([]); setImages([]); setLensResults(null); if (!isBufferDefault) setBuffer({ size: 0, weight: 0 }); if (fileInputRef.current) fileInputRef.current.value = ""; };
+            const handleClear = () => { setTitle(""); setRivalTitle(""); setCount(1); setJan(""); setAsin(""); setEbayRefItem(""); setEbayRefData(null); setCategory(""); setImage(null); setImageBase64(""); setRawResult(null); setError(""); setWarning(""); setLogs([]); setImages([]); setLensResults(null); if (!isBufferDefault) setBuffer({ size: 0, weight: 0 }); if (fileInputRef.current) fileInputRef.current.value = ""; };
             const addLog = (msg) => setLogs(p => [...p, msg]);
             const handleAddBox = () => { if (!newBox.name || !newBox.w) return; setCustomBoxes([...customBoxes, { id: Date.now(), name: newBox.name, w: Number(newBox.w), d: Number(newBox.d), h: Number(newBox.h) }]); setNewBox({ name: "", w: "", d: "", h: "" }); };
             const handleDeleteBox = (id) => setCustomBoxes(customBoxes.filter(b => b.id !== id));
             const handleSaveCustomTemplate = (c) => { setCustomTemplate(c); localStorage.setItem(TEMPLATES_KEY, c); };
             const handleDeleteImage = (i) => setImages(p => p.filter((_, idx) => idx !== i));
+
+            // eBay参考出品からデータ取得
+            const handleFetchEbayRef = async () => {
+                if (!ebayRefItem) return;
+                setEbayRefLoading(true);
+                setEbayRefData(null);
+                addLog(`🔍 eBay Item #${ebayRefItem} からデータ取得中...`);
+                try {
+                    const res = await server.call('fetchEbayItemData', ebayRefItem);
+                    if (res.success) {
+                        setEbayRefData(res);
+                        addLog(`✅ カテゴリ: ${res.categoryName} (${res.categoryId})`);
+                        addLog(`✅ Item Specifics: ${res.itemSpecifics?.length || 0}件`);
+                    } else {
+                        setError(res.message || 'eBayデータ取得に失敗しました');
+                        addLog(`❌ ${res.message || 'エラー'}`);
+                    }
+                } catch (e) {
+                    setError('eBay API通信エラー: ' + e.message);
+                    addLog(`❌ 通信エラー: ${e.message}`);
+                }
+                setEbayRefLoading(false);
+            };
 
             // Utils
             const parseDims = (s) => { if(!s || s==="不明") return null; const n=s.match(/(\d+(\.\d+)?)/g); return n && n.length>=3 ? [parseFloat(n[0]),parseFloat(n[1]),parseFloat(n[2])] : null; };
@@ -733,6 +759,41 @@ Your goal is to create high-converting, SEO-optimized product data.
                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">JAN / UPC</label>
                                         <input type="text" value={jan} onChange={e=>setJan(e.target.value)} placeholder="バーコード数字" className="w-full p-3 border rounded-lg font-mono" />
                                         <p className="text-[10px] text-slate-400 mt-1">※セット品がヒットする可能性があります</p>
+                                    </div>
+
+                                    <div className="md:col-span-2 bg-emerald-50 p-3 rounded-lg border border-emerald-200">
+                                        <label className="block text-xs font-bold text-emerald-700 uppercase mb-1 flex justify-between">
+                                            <span>📋 参考eBay出品 (Item Number)</span>
+                                            <span className="text-[10px] bg-emerald-600 text-white px-1.5 rounded">カテゴリ/スペック取得</span>
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <input type="text" value={ebayRefItem} onChange={e=>setEbayRefItem(e.target.value)} placeholder="例: 123456789012" className="flex-1 p-3 border border-emerald-300 rounded-lg font-mono focus:ring-2 focus:ring-emerald-500 outline-none" />
+                                            <button onClick={handleFetchEbayRef} disabled={ebayRefLoading || !ebayRefItem} className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                                                {ebayRefLoading ? <div className="loader border-white/30 border-t-white w-4 h-4"></div> : <Icon name="download" size={16}/>}
+                                                取得
+                                            </button>
+                                        </div>
+                                        <p className="text-[10px] text-emerald-600 mt-1">※競合出品からカテゴリ・Item Specificsをコピー</p>
+                                        {ebayRefData && (
+                                            <div className="mt-3 p-3 bg-white rounded-lg border border-emerald-200 text-sm">
+                                                <div className="font-bold text-emerald-800 mb-2">✅ 取得成功</div>
+                                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                                    <div><span className="text-slate-500">カテゴリID:</span> <span className="font-mono">{ebayRefData.categoryId}</span></div>
+                                                    <div><span className="text-slate-500">カテゴリ名:</span> {ebayRefData.categoryName}</div>
+                                                </div>
+                                                {ebayRefData.itemSpecifics && ebayRefData.itemSpecifics.length > 0 && (
+                                                    <div className="mt-2">
+                                                        <div className="text-slate-500 text-xs mb-1">Item Specifics ({ebayRefData.itemSpecifics.length}件):</div>
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {ebayRefData.itemSpecifics.slice(0, 5).map((spec, i) => (
+                                                                <span key={i} className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]">{spec.name}: {spec.value}</span>
+                                                            ))}
+                                                            {ebayRefData.itemSpecifics.length > 5 && <span className="text-slate-400 text-[10px]">+{ebayRefData.itemSpecifics.length - 5}件</span>}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">数量</label><input type="number" value={count} onChange={e=>setCount(e.target.value)} className="w-full p-3 border rounded-lg" /></div>
