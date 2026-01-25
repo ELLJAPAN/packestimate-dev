@@ -693,12 +693,12 @@ These charges are normally collected by the delivering freight shipping company 
                     if (!forceAI && (jan || asin)) {
                         addLog("🔍 Keepa検索中...");
                         const kRes = await server.call('fetchKeepaData', asin ? 'asin' : 'jan', asin || jan);
-                        if (kRes.success) {
+                        if (kRes.success && kRes.data) {
                             addLog("✅ Keepaデータ取得");
-                            keepaData = kRes; usedSource = "Keepa (Amazon公式)";
-                            if (kRes.packageHeight > 0) rawDimsKeepa = [kRes.packageLength/10, kRes.packageWidth/10, kRes.packageHeight/10];
-                            if (kRes.packageWeight > 0) rawWeightKeepa = kRes.packageWeight;
-                            imagesKeepa = kRes.images; eanKeepa = kRes.ean;
+                            keepaData = kRes.data; usedSource = "Keepa (Amazon公式)";
+                            if (kRes.data.packageHeight > 0) rawDimsKeepa = [kRes.data.packageLength/10, kRes.data.packageWidth/10, kRes.data.packageHeight/10];
+                            if (kRes.data.packageWeight > 0) rawWeightKeepa = kRes.data.packageWeight;
+                            imagesKeepa = kRes.data.images; eanKeepa = kRes.data.eanList?.[0];
                         } else addLog("⚠️ Keepaデータなし");
                     }
 
