@@ -870,65 +870,6 @@ Your goal is to create high-converting, SEO-optimized product data.
                                         <p className="text-[10px] text-slate-400 mt-1">※セット品がヒットする可能性があります</p>
                                     </div>
 
-                                    <div className="md:col-span-2 bg-emerald-50 p-3 rounded-lg border border-emerald-200">
-                                        <label className="block text-xs font-bold text-emerald-700 uppercase mb-1 flex justify-between">
-                                            <span>📋 参考eBay出品 (Item Number)</span>
-                                            <span className="text-[10px] bg-emerald-600 text-white px-1.5 rounded">カテゴリ/スペック取得</span>
-                                        </label>
-                                        <div className="flex gap-2">
-                                            <input type="text" value={ebayRefItem} onChange={e=>setEbayRefItem(e.target.value)} placeholder="例: 123456789012" className="flex-1 p-3 border border-emerald-300 rounded-lg font-mono focus:ring-2 focus:ring-emerald-500 outline-none" />
-                                            <button onClick={handleFetchEbayRef} disabled={ebayRefLoading || !ebayRefItem} className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                                                {ebayRefLoading ? <div className="loader border-white/30 border-t-white w-4 h-4"></div> : <Icon name="download" size={16}/>}
-                                                取得
-                                            </button>
-                                        </div>
-                                        <p className="text-[10px] text-emerald-600 mt-1">※競合出品からカテゴリ・Item Specificsをコピー</p>
-                                        {ebayRefData && (
-                                            <div className="mt-3 p-4 bg-white rounded-lg border border-emerald-200 text-sm">
-                                                <div className="flex justify-between items-center mb-3">
-                                                    <div className="font-bold text-emerald-800">✅ 取得成功</div>
-                                                    <button 
-                                                        onClick={() => {
-                                                            const text = ebayRefData.itemSpecifics.map(s => `${s.name}\t${s.value}`).join('\n');
-                                                            navigator.clipboard.writeText(text);
-                                                        }}
-                                                        className="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-2 py-1 rounded flex items-center gap-1"
-                                                    >
-                                                        <Icon name="copy" size={12}/> 全コピー
-                                                    </button>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-2 text-xs mb-3 p-2 bg-emerald-50 rounded">
-                                                    <div><span className="text-slate-500">カテゴリID:</span> <span className="font-mono font-bold">{ebayRefData.categoryId}</span></div>
-                                                    <div><span className="text-slate-500">タイトル:</span> <span className="truncate">{ebayRefData.title?.substring(0,30)}...</span></div>
-                                                </div>
-                                                {ebayRefData.categoryName && (
-                                                    <div className="text-[10px] text-slate-500 mb-2 truncate">📁 {ebayRefData.categoryName}</div>
-                                                )}
-                                                {ebayRefData.itemSpecifics && ebayRefData.itemSpecifics.length > 0 && (
-                                                    <div>
-                                                        <div className="text-slate-500 text-xs mb-2 font-bold">Item Specifics ({ebayRefData.itemSpecifics.length}件)</div>
-                                                        <div className="max-h-48 overflow-y-auto space-y-1 pr-2">
-                                                            {ebayRefData.itemSpecifics.map((spec, i) => (
-                                                                <div key={i} className="flex items-center justify-between bg-slate-50 hover:bg-emerald-50 px-2 py-1 rounded text-xs group">
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <span className="text-slate-500">{spec.name}:</span>{' '}
-                                                                        <span className="font-medium text-slate-800">{spec.value}</span>
-                                                                    </div>
-                                                                    <button 
-                                                                        onClick={() => navigator.clipboard.writeText(spec.value)}
-                                                                        className="ml-2 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-emerald-600"
-                                                                    >
-                                                                        <Icon name="copy" size={12}/>
-                                                                    </button>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-
                                     <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">数量</label><input type="number" value={count} onChange={e=>setCount(e.target.value)} className="w-full p-3 border rounded-lg" /></div>
                                     <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">カテゴリ</label><select value={category} onChange={e=>setCategory(e.target.value)} className="w-full p-3 border rounded-lg bg-white"><option value="" disabled>選択...</option><option value="フィギュア・ねんどろいど">フィギュア・ねんどろいど</option><option value="トレカ・カードゲーム">トレカ・カードゲーム</option><option value="ゲームソフト・周辺機器">ゲームソフト・周辺機器</option><option value="書籍・コミック">書籍・コミック</option><option value="アパレル">アパレル</option><option value="その他">その他</option></select></div>
                                 </div>
@@ -975,197 +916,260 @@ Your goal is to create high-converting, SEO-optimized product data.
                                 </div>
                             )}
                         </div>
-                        <div className="w-full lg:w-96 flex-shrink-0 space-y-6">
-                            {/* 出品設定パネル */}
-                            {(listingCategoryId || listingItemSpecifics.length > 0 || listingTitle) && (
-                                <div className="bg-gradient-to-br from-emerald-50 to-white rounded-xl shadow-sm border border-emerald-200 p-4 space-y-4">
-                                    <h3 className="font-bold text-emerald-800 text-sm flex items-center gap-2">
-                                        <Icon name="shopping-cart" size={16}/> 出品設定
-                                    </h3>
-                                    
-                                    {/* タイトル */}
+                        <div className="w-full lg:w-96 flex-shrink-0 space-y-4">
+                            {/* 参考eBay出品（常時表示） */}
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 space-y-3">
+                                <h3 className="font-bold text-slate-700 text-sm flex items-center gap-2">
+                                    <Icon name="search" size={16}/> 参考eBay出品
+                                </h3>
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="text" 
+                                        value={ebayRefItem} 
+                                        onChange={e=>setEbayRefItem(e.target.value)} 
+                                        placeholder="eBay Item Number" 
+                                        className="flex-1 p-2.5 border border-slate-200 rounded-lg font-mono text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" 
+                                    />
+                                    <button 
+                                        onClick={handleFetchEbayRef} 
+                                        disabled={ebayRefLoading || !ebayRefItem} 
+                                        className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                    >
+                                        {ebayRefLoading ? <div className="loader border-white/30 border-t-white w-4 h-4"></div> : <Icon name="download" size={16}/>}
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-slate-400">競合出品からカテゴリ・Item Specificsをコピー</p>
+                                
+                                {/* 取得結果 */}
+                                {ebayRefData && (
+                                    <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-sm animate-fade-in">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <div className="font-bold text-emerald-800 text-xs">✅ 取得成功</div>
+                                            <button 
+                                                onClick={() => {
+                                                    const text = ebayRefData.itemSpecifics.map(s => `${s.name}\t${s.value}`).join('\n');
+                                                    navigator.clipboard.writeText(text);
+                                                }}
+                                                className="text-[10px] bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-2 py-0.5 rounded flex items-center gap-1"
+                                            >
+                                                <Icon name="copy" size={10}/> 全コピー
+                                            </button>
+                                        </div>
+                                        <div className="text-xs text-slate-600 mb-2">
+                                            <span className="text-slate-400">カテゴリ:</span> <span className="font-mono font-bold">{ebayRefData.categoryId}</span>
+                                        </div>
+                                        {ebayRefData.categoryName && (
+                                            <div className="text-[10px] text-slate-500 mb-2 truncate">📁 {ebayRefData.categoryName}</div>
+                                        )}
+                                        {ebayRefData.itemSpecifics && ebayRefData.itemSpecifics.length > 0 && (
+                                            <details className="text-xs">
+                                                <summary className="cursor-pointer text-slate-500 hover:text-emerald-600">
+                                                    Item Specifics ({ebayRefData.itemSpecifics.length}件)
+                                                </summary>
+                                                <div className="mt-2 max-h-32 overflow-y-auto space-y-1">
+                                                    {ebayRefData.itemSpecifics.map((spec, i) => (
+                                                        <div key={i} className="flex items-center justify-between bg-white px-2 py-1 rounded text-[10px] group">
+                                                            <span><span className="text-slate-400">{spec.name}:</span> <span className="font-medium">{spec.value}</span></span>
+                                                            <button onClick={() => navigator.clipboard.writeText(spec.value)} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-emerald-600">
+                                                                <Icon name="copy" size={10}/>
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </details>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* 出品設定パネル（常時表示） */}
+                            <div className="bg-gradient-to-br from-emerald-50 to-white rounded-xl shadow-sm border border-emerald-200 p-4 space-y-4 sticky top-20">
+                                <h3 className="font-bold text-emerald-800 text-sm flex items-center gap-2">
+                                    <Icon name="tag" size={16}/> 出品設定
+                                </h3>
+                                
+                                {/* タイトル */}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                                        タイトル <span className={listingTitle.length <= 80 ? "text-green-600" : "text-red-600"}>({listingTitle.length}/80)</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        value={listingTitle} 
+                                        onChange={e => setListingTitle(e.target.value)}
+                                        placeholder="解析後に自動入力"
+                                        className={`w-full p-2 border rounded-lg text-sm ${listingTitle.length > 80 ? 'border-red-300 bg-red-50' : 'border-emerald-200'}`}
+                                    />
+                                </div>
+                                
+                                {/* 価格・数量・コンディション */}
+                                <div className="grid grid-cols-3 gap-2">
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                                            タイトル <span className={listingTitle.length <= 80 ? "text-green-600" : "text-red-600"}>({listingTitle.length}/80)</span>
-                                        </label>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">価格 ($)</label>
                                         <input 
-                                            type="text" 
-                                            value={listingTitle} 
-                                            onChange={e => setListingTitle(e.target.value)}
-                                            className={`w-full p-2 border rounded-lg text-sm ${listingTitle.length > 80 ? 'border-red-300 bg-red-50' : 'border-emerald-200'}`}
+                                            type="number" 
+                                            step="0.01"
+                                            value={listingPrice} 
+                                            onChange={e => setListingPrice(e.target.value)}
+                                            className="w-full p-2 border border-emerald-200 rounded-lg text-sm font-mono"
+                                            placeholder="29.99"
                                         />
                                     </div>
-                                    
-                                    {/* 価格・数量・コンディション */}
-                                    <div className="grid grid-cols-3 gap-2">
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">価格 ($)</label>
-                                            <input 
-                                                type="number" 
-                                                step="0.01"
-                                                value={listingPrice} 
-                                                onChange={e => setListingPrice(e.target.value)}
-                                                className="w-full p-2 border border-emerald-200 rounded-lg text-sm font-mono"
-                                                placeholder="29.99"
-                                            />
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">数量</label>
+                                        <input 
+                                            type="number" 
+                                            value={listingQuantity} 
+                                            onChange={e => setListingQuantity(e.target.value)}
+                                            className="w-full p-2 border border-emerald-200 rounded-lg text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">状態</label>
+                                        <select 
+                                            value={listingCondition} 
+                                            onChange={e => setListingCondition(e.target.value)}
+                                            className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-white"
+                                        >
+                                            <option value="NEW">New</option>
+                                            <option value="LIKE_NEW">Like New</option>
+                                            <option value="VERY_GOOD">Very Good</option>
+                                            <option value="GOOD">Good</option>
+                                            <option value="ACCEPTABLE">Acceptable</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                {/* カテゴリID */}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">eBay カテゴリID</label>
+                                    <input 
+                                        type="text" 
+                                        value={listingCategoryId} 
+                                        onChange={e => setListingCategoryId(e.target.value)}
+                                        placeholder="参考出品から取得"
+                                        className="w-full p-2 border border-emerald-200 rounded-lg font-mono text-sm"
+                                    />
+                                </div>
+                                
+                                {/* 説明文 */}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">説明文</label>
+                                    <textarea 
+                                        value={listingDescription} 
+                                        onChange={e => setListingDescription(e.target.value)}
+                                        rows={3}
+                                        placeholder="解析後に自動生成"
+                                        className="w-full p-2 border border-emerald-200 rounded-lg text-sm resize-none"
+                                    />
+                                </div>
+                                
+                                {/* 画像プレビュー */}
+                                {listingImages.length > 0 && (
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">画像 ({listingImages.length})</label>
+                                        <div className="flex gap-1 overflow-x-auto pb-1">
+                                            {listingImages.slice(0, 5).map((url, i) => (
+                                                <img key={i} src={url} className="w-12 h-12 object-cover rounded border" />
+                                            ))}
                                         </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">数量</label>
-                                            <input 
-                                                type="number" 
-                                                value={listingQuantity} 
-                                                onChange={e => setListingQuantity(e.target.value)}
-                                                className="w-full p-2 border border-emerald-200 rounded-lg text-sm"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">状態</label>
-                                            <select 
-                                                value={listingCondition} 
-                                                onChange={e => setListingCondition(e.target.value)}
-                                                className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-white"
+                                    </div>
+                                )}
+                                
+                                {/* Item Specifics */}
+                                {listingItemSpecifics.length > 0 && (
+                                    <div>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <label className="text-xs font-bold text-slate-500 uppercase">Item Specifics ({listingItemSpecifics.filter(s=>s.enabled).length}/{listingItemSpecifics.length})</label>
+                                            <button 
+                                                onClick={() => setListingItemSpecifics(listingItemSpecifics.map(s => ({...s, enabled: !listingItemSpecifics.every(x=>x.enabled)})))}
+                                                className="text-[10px] text-emerald-600 hover:text-emerald-800"
                                             >
-                                                <option value="NEW">New</option>
-                                                <option value="LIKE_NEW">Like New</option>
-                                                <option value="VERY_GOOD">Very Good</option>
-                                                <option value="GOOD">Good</option>
-                                                <option value="ACCEPTABLE">Acceptable</option>
+                                                {listingItemSpecifics.every(s=>s.enabled) ? '全解除' : '全選択'}
+                                            </button>
+                                        </div>
+                                        <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
+                                            {listingItemSpecifics.map((spec, i) => (
+                                                <div 
+                                                    key={i} 
+                                                    className={`flex items-center gap-2 p-1.5 rounded text-xs transition-all ${spec.enabled ? 'bg-white border border-emerald-100' : 'bg-slate-100 opacity-50'}`}
+                                                >
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={spec.enabled} 
+                                                        onChange={() => {
+                                                            const updated = [...listingItemSpecifics];
+                                                            updated[i].enabled = !updated[i].enabled;
+                                                            setListingItemSpecifics(updated);
+                                                        }}
+                                                        className="w-3 h-3 accent-emerald-600"
+                                                    />
+                                                    <span className="text-slate-500 text-[10px] w-20 truncate">{spec.name}</span>
+                                                    <input 
+                                                        type="text"
+                                                        value={spec.value}
+                                                        onChange={e => {
+                                                            const updated = [...listingItemSpecifics];
+                                                            updated[i].value = e.target.value;
+                                                            setListingItemSpecifics(updated);
+                                                        }}
+                                                        disabled={!spec.enabled}
+                                                        className="flex-1 p-1 text-[10px] border border-slate-200 rounded bg-white disabled:bg-slate-50 disabled:text-slate-400"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {/* ポリシー読み込み */}
+                                {!policiesLoaded && (
+                                    <button 
+                                        onClick={loadEbayPolicies}
+                                        className="w-full py-2 text-sm text-emerald-600 hover:text-emerald-800 border border-emerald-200 rounded-lg"
+                                    >
+                                        📋 ビジネスポリシーを読み込む
+                                    </button>
+                                )}
+                                
+                                {/* ポリシー選択 */}
+                                {policiesLoaded && (
+                                    <div className="space-y-2 p-2 bg-slate-50 rounded-lg">
+                                        <div>
+                                            <label className="text-[10px] text-slate-500">Shipping Policy</label>
+                                            <select value={listingPolicies.shipping} onChange={e => setListingPolicies({...listingPolicies, shipping: e.target.value})} className="w-full p-1.5 text-xs border rounded bg-white">
+                                                {availablePolicies.shipping.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] text-slate-500">Return Policy</label>
+                                            <select value={listingPolicies.return} onChange={e => setListingPolicies({...listingPolicies, return: e.target.value})} className="w-full p-1.5 text-xs border rounded bg-white">
+                                                {availablePolicies.return.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] text-slate-500">Payment Policy</label>
+                                            <select value={listingPolicies.payment} onChange={e => setListingPolicies({...listingPolicies, payment: e.target.value})} className="w-full p-1.5 text-xs border rounded bg-white">
+                                                {availablePolicies.payment.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                             </select>
                                         </div>
                                     </div>
-                                    
-                                    {/* カテゴリID */}
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">eBay カテゴリID</label>
-                                        <input 
-                                            type="text" 
-                                            value={listingCategoryId} 
-                                            onChange={e => setListingCategoryId(e.target.value)}
-                                            className="w-full p-2 border border-emerald-200 rounded-lg font-mono text-sm"
-                                        />
-                                    </div>
-                                    
-                                    {/* 説明文 */}
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">説明文</label>
-                                        <textarea 
-                                            value={listingDescription} 
-                                            onChange={e => setListingDescription(e.target.value)}
-                                            rows={3}
-                                            className="w-full p-2 border border-emerald-200 rounded-lg text-sm resize-none"
-                                        />
-                                    </div>
-                                    
-                                    {/* 画像プレビュー */}
-                                    {listingImages.length > 0 && (
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">画像 ({listingImages.length})</label>
-                                            <div className="flex gap-1 overflow-x-auto pb-1">
-                                                {listingImages.slice(0, 5).map((url, i) => (
-                                                    <img key={i} src={url} className="w-12 h-12 object-cover rounded border" />
-                                                ))}
-                                            </div>
-                                        </div>
+                                )}
+                                
+                                {/* 出品ボタン */}
+                                <button 
+                                    onClick={handleCreateListing}
+                                    disabled={listingInProgress || !listingTitle || !listingCategoryId || !listingPrice || !policiesLoaded}
+                                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    {listingInProgress ? (
+                                        <><div className="loader border-white/30 border-t-white w-4 h-4"></div> 出品中...</>
+                                    ) : (
+                                        <><Icon name="external-link" size={16}/> eBayに出品</>
                                     )}
-                                    
-                                    {/* Item Specifics */}
-                                    {listingItemSpecifics.length > 0 && (
-                                        <div>
-                                            <div className="flex justify-between items-center mb-2">
-                                                <label className="text-xs font-bold text-slate-500 uppercase">Item Specifics ({listingItemSpecifics.filter(s=>s.enabled).length}/{listingItemSpecifics.length})</label>
-                                                <button 
-                                                    onClick={() => setListingItemSpecifics(listingItemSpecifics.map(s => ({...s, enabled: !listingItemSpecifics.every(x=>x.enabled)})))}
-                                                    className="text-[10px] text-emerald-600 hover:text-emerald-800"
-                                                >
-                                                    {listingItemSpecifics.every(s=>s.enabled) ? '全解除' : '全選択'}
-                                                </button>
-                                            </div>
-                                            <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
-                                                {listingItemSpecifics.map((spec, i) => (
-                                                    <div 
-                                                        key={i} 
-                                                        className={`flex items-center gap-2 p-1.5 rounded text-xs transition-all ${spec.enabled ? 'bg-white border border-emerald-100' : 'bg-slate-100 opacity-50'}`}
-                                                    >
-                                                        <input 
-                                                            type="checkbox" 
-                                                            checked={spec.enabled} 
-                                                            onChange={() => {
-                                                                const updated = [...listingItemSpecifics];
-                                                                updated[i].enabled = !updated[i].enabled;
-                                                                setListingItemSpecifics(updated);
-                                                            }}
-                                                            className="w-3 h-3 accent-emerald-600"
-                                                        />
-                                                        <span className="text-slate-500 text-[10px] w-20 truncate">{spec.name}</span>
-                                                        <input 
-                                                            type="text"
-                                                            value={spec.value}
-                                                            onChange={e => {
-                                                                const updated = [...listingItemSpecifics];
-                                                                updated[i].value = e.target.value;
-                                                                setListingItemSpecifics(updated);
-                                                            }}
-                                                            disabled={!spec.enabled}
-                                                            className="flex-1 p-1 text-[10px] border border-slate-200 rounded bg-white disabled:bg-slate-50 disabled:text-slate-400"
-                                                        />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                    
-                                    {/* ポリシー読み込み */}
-                                    {!policiesLoaded && (
-                                        <button 
-                                            onClick={loadEbayPolicies}
-                                            className="w-full py-2 text-sm text-emerald-600 hover:text-emerald-800 border border-emerald-200 rounded-lg"
-                                        >
-                                            📋 ビジネスポリシーを読み込む
-                                        </button>
-                                    )}
-                                    
-                                    {/* ポリシー選択 */}
-                                    {policiesLoaded && (
-                                        <div className="space-y-2 p-2 bg-slate-50 rounded-lg">
-                                            <div>
-                                                <label className="text-[10px] text-slate-500">Shipping Policy</label>
-                                                <select value={listingPolicies.shipping} onChange={e => setListingPolicies({...listingPolicies, shipping: e.target.value})} className="w-full p-1.5 text-xs border rounded bg-white">
-                                                    {availablePolicies.shipping.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] text-slate-500">Return Policy</label>
-                                                <select value={listingPolicies.return} onChange={e => setListingPolicies({...listingPolicies, return: e.target.value})} className="w-full p-1.5 text-xs border rounded bg-white">
-                                                    {availablePolicies.return.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] text-slate-500">Payment Policy</label>
-                                                <select value={listingPolicies.payment} onChange={e => setListingPolicies({...listingPolicies, payment: e.target.value})} className="w-full p-1.5 text-xs border rounded bg-white">
-                                                    {availablePolicies.payment.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                                </select>
-                                            </div>
-                                        </div>
-                                    )}
-                                    
-                                    {/* 出品ボタン */}
-                                    <button 
-                                        onClick={handleCreateListing}
-                                        disabled={listingInProgress || !listingTitle || !listingCategoryId || !listingPrice || !policiesLoaded}
-                                        className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                    >
-                                        {listingInProgress ? (
-                                            <><div className="loader border-white/30 border-t-white w-4 h-4"></div> 出品中...</>
-                                        ) : (
-                                            <><Icon name="upload" size={16}/> eBayに出品</>
-                                        )}
-                                    </button>
-                                    {!policiesLoaded && <p className="text-[10px] text-center text-slate-400">※出品にはポリシー読み込みが必要</p>}
-                                </div>
-                            )}
-                            
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sticky top-24 max-h-[calc(100vh-120px)] flex flex-col"><div className="flex justify-between mb-4 pb-2 border-b"><h3 className="font-bold text-slate-700 text-sm">履歴</h3><button onClick={()=>setHistory([])} className="text-[10px] text-slate-400 hover:text-red-500">クリア</button></div><div className="space-y-3 overflow-y-auto pr-1 flex-1">{history.map(item=><div key={item.id} className="bg-white rounded-lg p-3 border border-slate-100 hover:border-brand-primary/30 cursor-pointer relative"><div className="flex justify-between text-[10px] text-slate-400 mb-1.5"><span>{item.time}</span><span className="bg-slate-100 px-1.5 py-0.5 rounded">{item.provider.split(' ')[0]}</span></div><div className="font-bold text-xs line-clamp-2 mb-2">{item.title}</div><div className="flex gap-2 text-[10px] text-slate-500 bg-slate-50 p-1.5 rounded"><span>{item.size}</span>|<span>{item.weight}</span></div>{isLithiumDetected(item.lithium)&&<div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></div>}</div>)}</div></div>
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4"><div className="flex justify-between items-center mb-3 cursor-pointer hover:bg-slate-50 p-2 rounded-lg -mx-2" onClick={()=>setShowBoxConfig(!showBoxConfig)}><h3 className="font-bold text-slate-700 text-sm">📦 梱包資材</h3><span className="text-xs text-brand-primary">{showBoxConfig?'閉じる':'編集'}</span></div>{showBoxConfig && <div className="space-y-3 animate-fade-in mb-4"><div className="space-y-2 p-3 bg-slate-50 rounded-xl"><input type="text" placeholder="資材名" value={newBox.name} onChange={e=>setNewBox({...newBox,name:e.target.value})} className="w-full p-2 text-xs border rounded-lg" /><div className="flex gap-2"><input type="number" placeholder="W" value={newBox.w} onChange={e=>setNewBox({...newBox,w:e.target.value})} className="w-1/3 p-2 text-xs border rounded-lg" /><input type="number" placeholder="D" value={newBox.d} onChange={e=>setNewBox({...newBox,d:e.target.value})} className="w-1/3 p-2 text-xs border rounded-lg" /><input type="number" placeholder="H" value={newBox.h} onChange={e=>setNewBox({...newBox,h:e.target.value})} className="w-1/3 p-2 text-xs border rounded-lg" /></div><button onClick={handleAddBox} className="w-full py-1.5 bg-slate-800 text-white text-xs rounded-lg font-bold">追加</button></div></div>}<div className="max-h-48 overflow-y-auto space-y-1 pr-1">{customBoxes.map(box=><div key={box.id} className="flex justify-between items-center text-xs p-2.5 bg-white border border-slate-100 rounded-lg shadow-sm"><span className="font-mono text-slate-700 flex flex-col"><span className="font-bold text-slate-800">{box.name}</span><span className="text-[10px] text-slate-400">{box.w}×{box.d}×{box.h}</span></span>{showBoxConfig && <button onClick={()=>handleDeleteBox(box.id)} className="text-slate-300 hover:text-red-500"><Icon name="x" size={14}/></button>}</div>)}</div></div>
+                                </button>
+                                {!policiesLoaded && <p className="text-[10px] text-center text-slate-400">※出品にはポリシー読み込みが必要</p>}
+                            </div>
                         </div>
                     </main>
                 </div>
