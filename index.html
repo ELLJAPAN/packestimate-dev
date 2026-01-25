@@ -52,8 +52,8 @@
 
     <script type="text/babel">
         // ★★★★★ 設定エリア (重要) ★★★★★
-        // 開発版GAS API URL
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwCTLnz4UK7la_Wpc900rW56PvFrWX3Z5XvouehUn9pmxqo0ksut8xviRKffttHoHE2ew/exec";
+        // GASでデプロイしたウェブアプリのURLをここに貼り付けてください (/execで終わるもの)
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwv6d9qFJe-Uvvaa-H1xDMvRSPu7pvzZmTp6oI-BpbWDfJ_eGmxN4M60qkvz_fHdovj/exec";
         // ★★★★★★★★★★★★★★★★★★★
 
         const { useState, useEffect, useRef, useMemo, Fragment } = React;
@@ -171,8 +171,7 @@ These charges are normally collected by the delivering freight shipping company 
                 try {
                     const res = await fetch(GAS_API_URL, {
                         method: 'POST',
-                        body: JSON.stringify(payload),
-                        redirect: 'follow'
+                        body: JSON.stringify(payload)
                     });
                     const json = await res.json();
                     return json;
@@ -335,8 +334,7 @@ These charges are normally collected by the delivering freight shipping company 
                         <div className="text-center mb-8">
                             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-primary to-brand-accent rounded-2xl shadow-lg mb-4"><Icon name="box" size={32} className="text-white" /></div>
                             <h1 className="text-2xl font-bold text-white mb-2">PackEstimate AI Pro</h1>
-                            <span className="dev-badge text-xs px-3 py-1 rounded-full font-bold text-white">DEVELOPMENT</span>
-                            <p className="text-slate-400 text-sm mt-2">越境EC出品サポートシステム (Dev)</p>
+                            <p className="text-slate-400 text-sm">越境EC出品サポートシステム (Gemini 3 Flash)</p>
                         </div>
                         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-2xl p-8 space-y-6">
                             {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2"><Icon name="alert-circle" size={18} />{error}</div>}
@@ -541,7 +539,7 @@ These charges are normally collected by the delivering freight shipping company 
             const handleAnalyze = async (forceAI = false) => {
                 setError(""); setWarning("");
                 if (!imageBase64 && !jan && !asin && !title) { setError("解析に必要な情報がありません"); return; }
-                setLoading(true); setRawResult(null); setLogs([]); setImages([]); addLog("解析開始 (Gemini 3 Flash - Dev)...");
+                setLoading(true); setRawResult(null); setLogs([]); setImages([]); addLog("解析開始 (Gemini 3 Flash)...");
 
                 try {
                     let keepaData = null;
@@ -693,10 +691,7 @@ Your goal is to create high-converting, SEO-optimized product data.
                 <div className="min-h-screen flex flex-col text-slate-850 bg-slate-50">
                     <header className="bg-gradient-to-r from-slate-900 to-slate-800 text-white sticky top-0 z-50 shadow-md">
                         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
-                            <div className="flex items-center gap-3 font-bold text-lg">
-                                <Icon name="box"/> PackEstimate AI Pro
-                                <span className="dev-badge text-[10px] px-2 py-0.5 rounded-full font-bold text-white">DEV</span>
-                            </div>
+                            <div className="flex items-center gap-3 font-bold text-lg"><Icon name="box"/> PackEstimate AI Pro <span className="dev-badge text-[10px] px-2 py-0.5 rounded-full font-bold text-white">DEV</span></div>
                             <div className="flex items-center gap-4 text-sm">
                                 <div className="hidden md:flex bg-slate-800 px-3 py-1 rounded-full items-center gap-2 border border-slate-700"><Icon name="user" size={14}/><span>{currentUser.username}</span>{currentUser.role==='admin' && <span className="text-[10px] bg-amber-500 px-1.5 rounded">ADMIN</span>}</div>
                                 {currentUser.role === 'admin' && <button onClick={() => setShowUserManagement(true)} className="hover:text-amber-300"><Icon name="users"/></button>}
