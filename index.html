@@ -477,6 +477,7 @@ These charges are normally collected by the delivering freight shipping company 
             const [listingItemSpecifics, setListingItemSpecifics] = useState([]);
             const [listingTitle, setListingTitle] = useState("");
             const [listingDescription, setListingDescription] = useState("");
+            const [listingDdpTemplate, setListingDdpTemplate] = useState(DDP_TEMPLATE_DEFAULT);
             const [listingPrice, setListingPrice] = useState("");
             const [listingQuantity, setListingQuantity] = useState("1");
             const [listingCondition, setListingCondition] = useState("NEW");
@@ -559,9 +560,11 @@ These charges are normally collected by the delivering freight shipping company 
                     };
                     setAvailablePolicies(policies);
                     
-                    // デフォルト選択（最初のポリシー）
+                    // デフォルト選択
+                    // Shipping: "Draft Expedited 100" を優先、なければ最初
+                    const defaultShipping = policies.shipping.find(p => p.name === 'Draft Expedited 100') || policies.shipping[0];
                     setListingPolicies({
-                        shipping: policies.shipping[0]?.id || "",
+                        shipping: defaultShipping?.id || "",
                         return: policies.return[0]?.id || "",
                         payment: policies.payment[0]?.id || ""
                     });
@@ -594,10 +597,13 @@ These charges are normally collected by the delivering freight shipping company 
                     const returnPolicy = availablePolicies.return.find(p => p.id === listingPolicies.return);
                     const paymentPolicy = availablePolicies.payment.find(p => p.id === listingPolicies.payment);
                     
+                    // 商品説明 + DDPテンプレートを結合
+                    const fullDescription = listingDescription + '\n\n' + listingDdpTemplate;
+                    
                     const listingData = {
                         sku,
                         title: listingTitle,
-                        description: listingDescription,
+                        description: fullDescription,
                         price: parseFloat(listingPrice),
                         quantity: parseInt(listingQuantity) || 1,
                         categoryId: listingCategoryId,
@@ -712,26 +718,35 @@ These charges are normally collected by the delivering freight shipping company 
                     
                     const effTitle = title || (googleLensInfo?.title) || "";
                     
-                    const systemPrompt = `You are an expert professional seller exporting from Japan to eBay.
-Your goal is to create high-converting, SEO-optimized product data.
+                    const systemPrompt = `You are an expert eBay seller specializing in Japanese products with deep SEO knowledge.
 
-# Rules
-1. **Title**: Must include "Japan", "Authentic" (if applicable), and key product features. STRICTLY 80 characters or less. NO "New Product" or generic fillers.
-2. **Description (CRITICAL)**:
-   - Rewrite the product description specifically for eBay.
-   - **STRICTLY EXCLUDE**: Any mentions of "Amazon", "Pre-order", "Reservation", "Limited Edition bonuses" (unless intrinsic to the item), "Prime", or specific retailer availability.
-   - Focus on the item's features, specs, and condition.
-   - Highlight that it is an authentic item shipped from Japan.
-3. **Specs**: Do not use "Unknown". Estimate realistic values based on the product image and category.
-4. **Output**: Strictly JSON format only.
+# Title Rules (CRITICAL for SEO)
+1. **SEO Order**: Put the MOST searchable keywords FIRST. Order by search volume:
+   - Series/Brand name (e.g., "Pokemon", "One Piece", "Gundam")
+   - Specific product name (e.g., "Mega Dream EX", "Luffy Figure")
+   - Product type (e.g., "Trading Card", "Figure", "Plush")
+   - Set/Pack name (e.g., "High Class Pack", "Booster Box")
+   - "Japan" or "Japanese" goes LAST
+2. **If Rival Title is provided**: Rewrite/improve it with better SEO order, keeping key terms
+3. **STRICTLY 80 characters or less**
+4. **NO generic fillers**: "New Product", "Hot Sale", "Free Shipping", etc.
+
+Example good title: "Mega Dream EX Pokemon Card High Class Pack Holo Rare Japanese"
+Example bad title: "Japan Pokemon Card Game Mega Dream High Class Pack"
+
+# Description Rules
+- Professional eBay description for international buyers
+- **EXCLUDE**: "Amazon", "Pre-order", "Reservation", "Prime", retailer-specific text
+- Focus on item features, specs, condition
+- Keep it concise (3-5 sentences)
 
 # Input Context
-- Image provided: ${imageBase64 ? 'Yes (Analyze visual details closely)' : 'No'}
+- Image: ${imageBase64 ? 'Yes' : 'No'}
 - Category: ${category}
 - Quantity: ${count}
-- Rival Item Title: ${rivalTitle || "None (Create original)"}
-- Keepa Data: ${JSON.stringify(keepaData || "None")}
-- Google Lens Data: ${JSON.stringify(googleLensInfo || "None")}
+- Rival Title (REWRITE THIS if provided): ${rivalTitle || "None"}
+- Keepa: ${JSON.stringify(keepaData || "None")}
+- Lens: ${JSON.stringify(googleLensInfo || "None")}
 `;
 
                     const userPrompt = `Generate a JSON object for this item:
@@ -1066,15 +1081,34 @@ Your goal is to create high-converting, SEO-optimized product data.
                                     />
                                 </div>
                                 
-                                {/* 説明文 */}
+                                {/* 説明文（商品説明） */}
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">説明文</label>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">商品説明</label>
                                     <textarea 
                                         value={listingDescription} 
                                         onChange={e => setListingDescription(e.target.value)}
                                         rows={3}
                                         placeholder="解析後に自動生成"
                                         className="w-full p-2 border border-emerald-200 rounded-lg text-sm resize-none"
+                                    />
+                                </div>
+                                
+                                {/* DDPテンプレート */}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex justify-between items-center">
+                                        <span>DDPテンプレート</span>
+                                        <button 
+                                            onClick={() => setListingDdpTemplate(DDP_TEMPLATE_DEFAULT)}
+                                            className="text-[10px] text-emerald-600 hover:text-emerald-800"
+                                        >
+                                            リセット
+                                        </button>
+                                    </label>
+                                    <textarea 
+                                        value={listingDdpTemplate} 
+                                        onChange={e => setListingDdpTemplate(e.target.value)}
+                                        rows={4}
+                                        className="w-full p-2 border border-emerald-200 rounded-lg text-[10px] resize-none font-mono"
                                     />
                                 </div>
                                 
