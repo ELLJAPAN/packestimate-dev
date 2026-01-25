@@ -479,6 +479,7 @@ These charges are normally collected by the delivering freight shipping company 
             const [listingDescription, setListingDescription] = useState("");
             const [listingDdpTemplate, setListingDdpTemplate] = useState(DDP_TEMPLATE_DEFAULT);
             const [listingPrice, setListingPrice] = useState("");
+            const [listingSku, setListingSku] = useState("");
             const [listingQuantity, setListingQuantity] = useState("1");
             const [listingCondition, setListingCondition] = useState("NEW");
             const [listingImages, setListingImages] = useState([]);
@@ -535,7 +536,7 @@ These charges are normally collected by the delivering freight shipping company 
                 const file = e.target.files[0]; 
                 if (file) { setImage(URL.createObjectURL(file)); const r = new FileReader(); r.onloadend = () => setImageBase64(r.result.split(',')[1]); r.readAsDataURL(file); setError(""); setLensResults(null); } 
             };
-            const handleClear = () => { setTitle(""); setRivalTitle(""); setCount(1); setJan(""); setAsin(""); setEbayRefItem(""); setEbayRefData(null); setListingCategoryId(""); setListingItemSpecifics([]); setListingTitle(""); setListingDescription(""); setListingPrice(""); setListingQuantity("1"); setListingCondition("NEW"); setListingImages([]); setCategory(""); setImage(null); setImageBase64(""); setRawResult(null); setError(""); setWarning(""); setLogs([]); setImages([]); setLensResults(null); if (!isBufferDefault) setBuffer({ size: 0, weight: 0 }); if (fileInputRef.current) fileInputRef.current.value = ""; };
+            const handleClear = () => { setTitle(""); setRivalTitle(""); setCount(1); setJan(""); setAsin(""); setEbayRefItem(""); setEbayRefData(null); setListingCategoryId(""); setListingItemSpecifics([]); setListingTitle(""); setListingDescription(""); setListingPrice(""); setListingQuantity("1"); setListingCondition("NEW"); setListingImages([]); setListingSku(""); setCategory(""); setImage(null); setImageBase64(""); setRawResult(null); setError(""); setWarning(""); setLogs([]); setImages([]); setLensResults(null); if (!isBufferDefault) setBuffer({ size: 0, weight: 0 }); if (fileInputRef.current) fileInputRef.current.value = ""; };
             const addLog = (msg) => setLogs(p => [...p, msg]);
             const handleAddBox = () => { if (!newBox.name || !newBox.w) return; setCustomBoxes([...customBoxes, { id: Date.now(), name: newBox.name, w: Number(newBox.w), d: Number(newBox.d), h: Number(newBox.h) }]); setNewBox({ name: "", w: "", d: "", h: "" }); };
             const handleDeleteBox = (id) => setCustomBoxes(customBoxes.filter(b => b.id !== id));
@@ -586,7 +587,7 @@ These charges are normally collected by the delivering freight shipping company 
                 addLog("🚀 eBay出品開始...");
                 
                 try {
-                    const sku = `PE-${Date.now()}`;
+                    const sku = listingSku || `PE-${Date.now()}`;
                     const enabledSpecs = {};
                     listingItemSpecifics.filter(s => s.enabled).forEach(s => {
                         enabledSpecs[s.name] = [s.value];
@@ -822,6 +823,9 @@ Example bad title: "Japan Pokemon Card Game Mega Dream High Class Pack"
                     // 出品設定に反映
                     setListingTitle(safeEnTitle);
                     setListingDescription(parsed.descriptionEn || "");
+                    // SKUはASINをデフォルトに
+                    const skuValue = keepaData?.asin || parsed.asin || asin || "";
+                    if (skuValue && !listingSku) setListingSku(skuValue);
                     if (imagesKeepa && imagesKeepa.length > 0) {
                         setListingImages(imagesKeepa.map(id => `https://images-na.ssl-images-amazon.com/images/I/${id}`));
                     }
@@ -1028,6 +1032,18 @@ Example bad title: "Japan Pokemon Card Game Mega Dream High Class Pack"
                                         onChange={e => setListingTitle(e.target.value)}
                                         placeholder="解析後に自動入力"
                                         className={`w-full p-2 border rounded-lg text-sm ${listingTitle.length > 80 ? 'border-red-300 bg-red-50' : 'border-emerald-200'}`}
+                                    />
+                                </div>
+                                
+                                {/* カスタムラベル（SKU） */}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">カスタムラベル (SKU)</label>
+                                    <input 
+                                        type="text" 
+                                        value={listingSku} 
+                                        onChange={e => setListingSku(e.target.value)}
+                                        placeholder="ASINが自動入力"
+                                        className="w-full p-2 border border-emerald-200 rounded-lg text-sm font-mono"
                                     />
                                 </div>
                                 
