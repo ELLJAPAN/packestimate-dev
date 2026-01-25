@@ -589,6 +589,11 @@ These charges are normally collected by the delivering freight shipping company 
                         enabledSpecs[s.name] = [s.value];
                     });
                     
+                    // ポリシー名を取得
+                    const shippingPolicy = availablePolicies.shipping.find(p => p.id === listingPolicies.shipping);
+                    const returnPolicy = availablePolicies.return.find(p => p.id === listingPolicies.return);
+                    const paymentPolicy = availablePolicies.payment.find(p => p.id === listingPolicies.payment);
+                    
                     const listingData = {
                         sku,
                         title: listingTitle,
@@ -599,9 +604,9 @@ These charges are normally collected by the delivering freight shipping company 
                         conditionId: listingCondition,
                         itemSpecifics: enabledSpecs,
                         imageUrls: listingImages,
-                        fulfillmentPolicyId: listingPolicies.shipping,
-                        returnPolicyId: listingPolicies.return,
-                        paymentPolicyId: listingPolicies.payment
+                        shippingPolicyName: shippingPolicy?.name || '',
+                        returnPolicyName: returnPolicy?.name || '',
+                        paymentPolicyName: paymentPolicy?.name || ''
                     };
                     
                     addLog("📦 データ送信中...");
