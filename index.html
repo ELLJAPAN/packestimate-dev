@@ -757,12 +757,21 @@ Your goal is to create high-converting, SEO-optimized product data.
                     
                     let parsed;
                     try { 
+                        // GASエラーチェック
+                        if (!finalRes.success) {
+                            throw new Error(finalRes.message || 'Gemini API エラー');
+                        }
+                        if (!finalRes.content) {
+                            throw new Error('Gemini応答が空です');
+                        }
                         const cleanJson = finalRes.content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
                         parsed = JSON.parse(cleanJson); 
+                        addLog("✅ Gemini解析成功");
                     } 
                     catch (e) { 
                         console.error("Parse Error", e);
-                        parsed = { jpTitle: effTitle, enTitle: "Product Analysis Failed", descriptionJp: "解析エラー", rawSize: "20x15x10", rawWeight: "200", sizeType: "Item", lithium: "なし" }; 
+                        addLog("❌ Gemini: " + e.message);
+                        parsed = { jpTitle: effTitle, enTitle: "Product Analysis Failed", descriptionJp: "解析エラー: " + e.message, rawSize: "20x15x10", rawWeight: "200", sizeType: "Item", lithium: "なし" }; 
                     }
 
                     // 80文字制限を強制執行
