@@ -624,7 +624,32 @@ These charges are normally collected by the delivering freight shipping company 
                     if (res.success) {
                         addLog(`🎉 出品成功! Item#: ${res.listingId}`);
                         setError("");
-                        alert(`出品成功！\n\nItem Number: ${res.listingId}\n\n${res.listingUrl}`);
+                        
+                        // スプレッドシートに自動追加
+                        addLog("📊 スプレッドシートに追加中...");
+                        try {
+                            const sheetData = {
+                                sku: listingSku || asin,
+                                title: listingTitle,
+                                category: 'Toys & Hobbies',
+                                name: title,
+                                length: rawResult?.data?.packageLength || '',
+                                width: rawResult?.data?.packageWidth || '',
+                                height: rawResult?.data?.packageHeight || '',
+                                weight: rawResult?.data?.packageWeight || ''
+                            };
+                            const sheetRes = await server.call('addToListSheet', sheetData);
+                            if (sheetRes.success) {
+                                addLog(`✅ スプレッドシート追加完了 (行: ${sheetRes.row})`);
+                                alert(`出品成功！\n\nItem Number: ${res.listingId}\n${res.listingUrl}\n\n📊 スプレッドシートにも追加しました (行: ${sheetRes.row})`);
+                            } else {
+                                addLog(`⚠️ スプレッドシート追加失敗: ${sheetRes.message}`);
+                                alert(`出品成功！\n\nItem Number: ${res.listingId}\n${res.listingUrl}\n\n⚠️ スプレッドシート追加失敗: ${sheetRes.message}`);
+                            }
+                        } catch (sheetErr) {
+                            addLog(`⚠️ スプレッドシート追加エラー: ${sheetErr.message}`);
+                            alert(`出品成功！\n\nItem Number: ${res.listingId}\n${res.listingUrl}\n\n⚠️ スプレッドシート追加エラー`);
+                        }
                     } else {
                         setError("出品エラー: " + res.message);
                         addLog("❌ " + res.message);
