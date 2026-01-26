@@ -163,6 +163,7 @@ These charges are normally collected by the delivering freight shipping company 
                 else if (action === 'ebayGetReturnPolicies') { /* 引数なし */ }
                 else if (action === 'ebayGetPaymentPolicies') { /* 引数なし */ }
                 else if (action === 'ebayCreateListing') { payload.listingData = args[0]; }
+                else if (action === 'addToListSheet') { payload.data = args[0]; }
                 else {
                     const session = JSON.parse(localStorage.getItem('pack_estimate_session') || '{}');
                     payload.auth = { username: session.username, password: session.password };
