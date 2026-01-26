@@ -150,7 +150,7 @@ These charges are normally collected by the delivering freight shipping company 
                 let payload = { action };
                 
                 // 引数のマッピング
-                if (action === 'checkLogin') { payload.username = args[0]; payload.password = args[1]; }
+                if (action === 'login') { payload.username = args[0]; payload.password = args[1]; }
                 else if (action === 'validateSession') { return true; }
                 else if (action === 'fetchKeepaData') { payload.type = args[0]; payload.value = args[1]; }
                 else if (action === 'searchImageWithSerpAPI') { payload.imageBase64 = args[0]; }
@@ -323,7 +323,7 @@ These charges are normally collected by the delivering freight shipping company 
                 }
                 setLoading(true); setError("");
                 try {
-                    const result = await server.call('checkLogin', username, password);
+                    const result = await server.call('login', username, password);
                     if (result.success) {
                         onLogin(result.username, result.role, password);
                     } else {
