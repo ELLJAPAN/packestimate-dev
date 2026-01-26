@@ -478,7 +478,7 @@ These charges are normally collected by the delivering freight shipping company 
             const [listingTitle, setListingTitle] = useState("");
             const [listingDescription, setListingDescription] = useState("");
             const [listingDdpTemplate, setListingDdpTemplate] = useState(DDP_TEMPLATE_DEFAULT);
-            const [listingPrice, setListingPrice] = useState("");
+            const [listingPrice, setListingPrice] = useState("500");
             const [listingSku, setListingSku] = useState("");
             const [listingQuantity, setListingQuantity] = useState("1");
             const [listingCondition, setListingCondition] = useState("NEW");
@@ -536,7 +536,7 @@ These charges are normally collected by the delivering freight shipping company 
                 const file = e.target.files[0]; 
                 if (file) { setImage(URL.createObjectURL(file)); const r = new FileReader(); r.onloadend = () => setImageBase64(r.result.split(',')[1]); r.readAsDataURL(file); setError(""); setLensResults(null); } 
             };
-            const handleClear = () => { setTitle(""); setRivalTitle(""); setCount(1); setJan(""); setAsin(""); setEbayRefItem(""); setEbayRefData(null); setListingCategoryId(""); setListingItemSpecifics([]); setListingTitle(""); setListingDescription(""); setListingPrice(""); setListingQuantity("1"); setListingCondition("NEW"); setListingImages([]); setListingSku(""); setCategory(""); setImage(null); setImageBase64(""); setRawResult(null); setError(""); setWarning(""); setLogs([]); setImages([]); setLensResults(null); if (!isBufferDefault) setBuffer({ size: 0, weight: 0 }); if (fileInputRef.current) fileInputRef.current.value = ""; };
+            const handleClear = () => { setTitle(""); setRivalTitle(""); setCount(1); setJan(""); setAsin(""); setEbayRefItem(""); setEbayRefData(null); setListingCategoryId(""); setListingItemSpecifics([]); setListingTitle(""); setListingDescription(""); setListingPrice("500"); setListingQuantity("1"); setListingCondition("NEW"); setListingImages([]); setListingSku(""); setCategory(""); setImage(null); setImageBase64(""); setRawResult(null); setError(""); setWarning(""); setLogs([]); setImages([]); setLensResults(null); if (!isBufferDefault) setBuffer({ size: 0, weight: 0 }); if (fileInputRef.current) fileInputRef.current.value = ""; };
             const addLog = (msg) => setLogs(p => [...p, msg]);
             const handleAddBox = () => { if (!newBox.name || !newBox.w) return; setCustomBoxes([...customBoxes, { id: Date.now(), name: newBox.name, w: Number(newBox.w), d: Number(newBox.d), h: Number(newBox.h) }]); setNewBox({ name: "", w: "", d: "", h: "" }); };
             const handleDeleteBox = (id) => setCustomBoxes(customBoxes.filter(b => b.id !== id));
