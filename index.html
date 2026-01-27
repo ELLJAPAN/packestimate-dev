@@ -629,15 +629,21 @@ These charges are normally collected by the delivering freight shipping company 
                         // スプレッドシートに自動追加
                         addLog("📊 スプレッドシートに追加中...");
                         try {
+                            // 重量に応じたバッファ設定
+                            const baseWeight = rawResult?.rawWeight || 0;
+                            let sizeBuffer = 2, weightBuffer = 100;
+                            if (baseWeight >= 1000) { sizeBuffer = 4; weightBuffer = 300; }
+                            else if (baseWeight >= 500) { sizeBuffer = 3; weightBuffer = 200; }
+                            
                             const sheetData = {
                                 sku: listingSku || asin,
                                 title: listingTitle,
                                 category: 'Toys & Hobbies',
                                 name: rawResult?.jpTitle || title || '',
-                                length: rawResult?.rawDims?.[0] ? rawResult.rawDims[0] + 2 : '',
-                                width: rawResult?.rawDims?.[1] ? rawResult.rawDims[1] + 2 : '',
-                                height: rawResult?.rawDims?.[2] ? rawResult.rawDims[2] + 2 : '',
-                                weight: rawResult?.rawWeight ? rawResult.rawWeight + 100 : ''
+                                length: rawResult?.rawDims?.[0] ? rawResult.rawDims[0] + sizeBuffer : '',
+                                width: rawResult?.rawDims?.[1] ? rawResult.rawDims[1] + sizeBuffer : '',
+                                height: rawResult?.rawDims?.[2] ? rawResult.rawDims[2] + sizeBuffer : '',
+                                weight: baseWeight ? baseWeight + weightBuffer : ''
                             };
                             const sheetRes = await server.call('addToListSheet', sheetData);
                             if (sheetRes.success) {
