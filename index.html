@@ -633,11 +633,11 @@ These charges are normally collected by the delivering freight shipping company 
                                 sku: listingSku || asin,
                                 title: listingTitle,
                                 category: 'Toys & Hobbies',
-                                name: title,
-                                length: rawResult?.data?.packageLength || '',
-                                width: rawResult?.data?.packageWidth || '',
-                                height: rawResult?.data?.packageHeight || '',
-                                weight: rawResult?.data?.packageWeight || ''
+                                name: rawResult?.jpTitle || title || '',
+                                length: rawResult?.rawDims?.[0] || '',
+                                width: rawResult?.rawDims?.[1] || '',
+                                height: rawResult?.rawDims?.[2] || '',
+                                weight: rawResult?.rawWeight || ''
                             };
                             const sheetRes = await server.call('addToListSheet', sheetData);
                             if (sheetRes.success) {
