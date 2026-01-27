@@ -634,10 +634,10 @@ These charges are normally collected by the delivering freight shipping company 
                                 title: listingTitle,
                                 category: 'Toys & Hobbies',
                                 name: rawResult?.jpTitle || title || '',
-                                length: rawResult?.rawDims?.[0] || '',
-                                width: rawResult?.rawDims?.[1] || '',
-                                height: rawResult?.rawDims?.[2] || '',
-                                weight: rawResult?.rawWeight || ''
+                                length: rawResult?.rawDims?.[0] ? rawResult.rawDims[0] + 2 : '',
+                                width: rawResult?.rawDims?.[1] ? rawResult.rawDims[1] + 2 : '',
+                                height: rawResult?.rawDims?.[2] ? rawResult.rawDims[2] + 2 : '',
+                                weight: rawResult?.rawWeight ? rawResult.rawWeight + 100 : ''
                             };
                             const sheetRes = await server.call('addToListSheet', sheetData);
                             if (sheetRes.success) {
